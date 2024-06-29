@@ -18,14 +18,22 @@ docker --version
 Создаем сеть, которую будем использовать между контейнерами для связи
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/0154ba85-2eda-42ad-926a-33e61f64b07f)
 Был развернут контейнер с PostgreSQL 16 (был скачен новый image, т.к. в скаченном была версия PostgreSQL отличная от 16-го). Установдено с официального образа.
-![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/3df23ea2-8495-4b74-b3a9-23031236eb28)
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/1bc550ee-31c3-4f3d-94e0-b752d9214643)
 Проверим подключение к PG в Docker
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/27c208f9-0f32-4435-9556-953489727297)
+Т.к. контейнер был создан без связи с сетью, созданной выше, контейнер был удален через Docker Desktop и запущен заново через команду:
+sudo docker run --name dockerPG16 --network netpg16 -e POSTGRES_PASSWORD=67890 -d -p 5432:5432 -v /var/lib/postgres:/var/lib/postgresql/data postgres:16
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/636a9d86-6174-41df-8c77-fd9de8889837)
 ## 5.развернуть контейнер с клиентом postgres
-
-подключится из контейнера с клиентом к контейнеру с сервером и сделать таблицу с парой строк
-подключится к контейнеру с сервером с ноутбука/компьютера извне инстансов GCP/ЯО/места установки докера
+Запускаем контейнер с клиентом в созданной сети netpg16 и подключаемся к серверу PG в контейнере dockerPG16:
+sudo docker run -it --rm --network netpg16 --name dockerPG16-cl postgres:16 psql -h dockerPG16 -U postgres
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/8d569b21-a43e-43dc-82bb-620dbbd5be71)
+В docker desktop видно два контейнера:
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/e27d49b1-e705-431f-975b-568859152dd0)
+## 6.подключится из контейнера с клиентом к контейнеру с сервером и сделать таблицу с парой строк
+Создаем базу данных с одной таблицей и заполяем ее двумя записями:
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/450839e0-6e1d-434c-92db-94735599304f)
+## 7.подключится к контейнеру с сервером с ноутбука/компьютера извне инстансов GCP/ЯО/места установки докера
 удалить контейнер с сервером
 создать его заново
 подключится снова из контейнера с клиентом к контейнеру с сервером
