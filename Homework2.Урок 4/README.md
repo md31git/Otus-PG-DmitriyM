@@ -13,8 +13,13 @@ docker --version
 Провереда проверка не его существование: cd /var/lib/postgres
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/c7cc30ee-b820-49c4-ae5e-19c13c0947e2)
 ## 4.развернуть контейнер с PostgreSQL 15 смонтировав в него /var/lib/postgresql
+Был развернут контейнер с PostgreSQL 16 (был скачен новый image, т.к. в скаченном была версия PostgreSQL отличная от 16-го)
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/3df23ea2-8495-4b74-b3a9-23031236eb28)
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/1bc550ee-31c3-4f3d-94e0-b752d9214643)
+Проверим подключение к PG в Docker
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/27c208f9-0f32-4435-9556-953489727297)
+## 5.развернуть контейнер с клиентом postgres
 
-развернуть контейнер с клиентом postgres
 подключится из контейнера с клиентом к контейнеру с сервером и сделать таблицу с парой строк
 подключится к контейнеру с сервером с ноутбука/компьютера извне инстансов GCP/ЯО/места установки докера
 удалить контейнер с сервером
