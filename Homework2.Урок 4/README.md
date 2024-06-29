@@ -8,12 +8,16 @@ Docker был установлен через установку Docker Desktop 
 Проверка что Docker установлен:
 docker --version
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/48e1f242-9e07-4e90-976e-cc3a0ca3b7ec)
+или так: sudo docker ps
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/76d925e0-2052-4732-9e83-b120df77eadd)
 ## 3.сделать каталог /var/lib/postgres
 Был создан каталог /var/lib/postgres: sudo mkdir /var/lib/postgres
 Провереда проверка не его существование: cd /var/lib/postgres
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/c7cc30ee-b820-49c4-ae5e-19c13c0947e2)
 ## 4.развернуть контейнер с PostgreSQL 15 смонтировав в него /var/lib/postgresql
-Был развернут контейнер с PostgreSQL 16 (был скачен новый image, т.к. в скаченном была версия PostgreSQL отличная от 16-го)
+Создаем сеть, которую будем использовать между контейнерами для связи
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/0154ba85-2eda-42ad-926a-33e61f64b07f)
+Был развернут контейнер с PostgreSQL 16 (был скачен новый image, т.к. в скаченном была версия PostgreSQL отличная от 16-го). Установдено с официального образа.
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/3df23ea2-8495-4b74-b3a9-23031236eb28)
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/1bc550ee-31c3-4f3d-94e0-b752d9214643)
 Проверим подключение к PG в Docker
