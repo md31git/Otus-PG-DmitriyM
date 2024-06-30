@@ -40,8 +40,30 @@ sudo docker run -it --rm --network netpg16 --name dockerPG16-cl postgres:16 psql
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/37f2a89f-856c-4ac3-9bac-5f02c9919dd9)
 Выяснив IP, была произведена настройка подключения в DBeaver. Главное не забыть установить флаг "Показывать все базы данных", а иначе новую созданную базу не видно в обозревателе.
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/9effe528-498f-46a6-b07e-495ba20b69ab)
-удалить контейнер с сервером
-создать его заново
-подключится снова из контейнера с клиентом к контейнеру с сервером
-проверить, что данные остались на месте
-оставляйте в ЛК ДЗ комментарии что и как вы делали и как боролись с проблемами
+## 8.удалить контейнер с сервером
+Чтобы удалить контейнер необходимо его остановить, а уже потом удалять.
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/c10606ca-be4a-4fbc-92d2-9b0b6db05ef4)
+Также можно проверить что контейнер остановлен в Docker Desktop.
+Затем удаляем контейнер: docker rm dockerPG16
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/39e6b2c3-3e44-4543-bca1-eff205d21d19)
+Ни одного котейнера не осталось в Docker Desktop.
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/2f65352f-33af-4747-b02b-d5d1bd3b30a2)
+## 9.создать его заново
+Создаем заново и запускаем контейнер:
+sudo docker run --name dockerPG16 --network netpg16 -e POSTGRES_PASSWORD=67890 -d -p 5432:5432 -v /var/lib/postgres:/var/lib/postgresql/data postgres:16
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/124806cd-1af3-4dce-8984-07d89b42ae53)
+Проверяем что он создался и запустился:
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/96aedb03-76f4-472a-9d7c-5395c91faab6)
+или командой sudo docker ps
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/51c1125f-a3bb-4fa6-936c-be832a45ab7e)
+## 10.подключится снова из контейнера с клиентом к контейнеру с сервером
+Запускаем контейнер с клиентом:
+sudo docker run -it --rm --network netpg16 --name dockerPG16-cl postgres:16 psql -h dockerPG16 -U postgres
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/7c79dd98-26e3-410a-aaa0-15b00fca9c0b)
+## 11.проверить, что данные остались на месте
+Смотрим список БД: \l
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/ac9801e3-c382-4d80-87c1-140048539799)
+Переключаемся в БД dbhw2: \c и смотрим список таблиц: \dt
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/cc2555e7-01de-49bb-b164-706d359721da)
+Проверяем содержимое созданной ранее таблицы:
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/28610a0c-f17c-442f-a063-a3daa2ab1702)
