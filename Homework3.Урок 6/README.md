@@ -1,5 +1,5 @@
 ## 1.создайте виртуальную машину c Ubuntu 20.04/22.04 LTS в GCE/ЯО/Virtual Box/докере поставьте на нее PostgreSQL 15 через sudo apt
-Уже был установен PG 14 на WSL на Ubuntu. Согласовано что на данной версии тоже будет работать все необходимые команды.
+Уже был установлен PG 14 на WSL на Ubuntu. Согласовано что на данной версии тоже будет работать все необходимые команды.
 
 sudo apt install postgresql postgresql-contrib
 
@@ -22,7 +22,7 @@ sudo apt install postgresql postgresql-contrib
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/17c31141-6f71-4a1f-b42a-a64840e1723d)
 
 ## 5.создайте новый диск к ВМ размером 10GB (отдельная директория)
-Переключаемся на пользователя root чтобы были админские права:
+Переключаемся на пользователя root чтобы были права администратора:
 
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/08ff7c6f-646a-4e78-9147-1f080c27613f)
 
@@ -45,10 +45,10 @@ sudo -u postgres pg_ctlcluster 14 main start
 
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/76dc5337-aee5-4c3f-82ac-3b7f266addf1)
 
-Вышла ошибка, т.к. PG првоерять все пути на доступность согласно файлам конфигурации. 
+Вышла ошибка, т.к. PG проверяет все пути на доступность согласно файлам конфигурации. А путь /var/lib/postgresql/14/main отсутствует
 
 ## 9.задание: найти конфигурационный параметр в файлах раположенных в /etc/postgresql/15/main который надо поменять и поменяйте его
-Открыли файл /etc/postgresql/14/main/postgresql.conf (именно там указан каталог, где по умолчанию храняться данные БД) и поменяли в параметре data_directory новый путь на /var/lib/postgresql/test/14
+Открыли файл /etc/postgresql/14/main/postgresql.conf (именно там указан каталог, где по умолчанию хранятся данные БД) и поменяли в параметре data_directory новый путь на /var/lib/postgresql/test/14/main
 
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/a6698c10-0127-452f-821f-f610e025b863)
 
