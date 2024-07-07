@@ -51,7 +51,7 @@ sudo -u postgres psql -h localhost -U testread -d testdb
 ## 7.есть идеи как убрать эти права? если нет - смотрите шпаргалку
 В итоге посмотрев шпаргалку забрал права у роли public:  
 * все права в схеме public
-* И все права на БД testdb (это надо повторить для всех БД)
+* все права на БД testdb (это надо повторить для всех БД)
   
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/5b13b43d-916a-40d5-b208-93f1511b4886)
 
