@@ -22,7 +22,7 @@
 
 Настройи по умолчанию PG:
 
-![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/e875d3ce-5077-48c6-8881-3078f0785eea)
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/02c63bcc-4b9a-464c-a0d6-c2a2365d81df)
 
 Здесь отобраны наиболее значимые для производительности параметры PG. 
 
@@ -37,6 +37,23 @@
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/3883fb65-db37-4ff2-addf-b429cb004039)
 
 ## 2.настроить кластер PostgreSQL 15 на максимальную производительность не обращая внимание на возможные проблемы с надежностью в случае аварийной перезагрузки виртуальной машины
-
+Устанавливаем параметры PG для максимальной производительности в ущерб надежности:
+```bash
+ALTER SYSTEM SET autovacuum = 'off'; -- отключаем автовакуум, чтобы не нагружать фоновым процессом систему.
+ALTER SYSTEM SET synchronous_commit = 'off'; -- включаем ассинхронную зваись WAL на диск не дожидаясь подтверждения
+ALTER SYSTEM SET wal_level = 'minimal'; -- включаем минимальное логирование данных (нет репликации)
+ALTER SYSTEM SET max_connections = '100'; -- оставляем без изменений (кол-во полþзователей * 2)
+ALTER SYSTEM SET shared_buffers = '3.2GB'; -- рекомендация от 25% до 40%, ставим 40% по верхней границе
+ALTER SYSTEM SET effective_cache_size = '6GB'; -- рекомендация 75%,
+ALTER SYSTEM SET maintenance_work_mem = '512MB'; -- берем данные из https://pgtune.leopard.in.ua/#/ 
+ALTER SYSTEM SET wal_buffers = '100MB'; -- увеличиваем размер буфера как 1/32 от **shared_buffers**
+ALTER SYSTEM SET work_mem = '5242kB'; -- увеличиваем до 32Mb. 50 соединений *32Mb = 1.6ГБ - не превышает shared_buffers.
+ALTER SYSTEM SET huge_pages = 'on'; -- В результате использования огромных страниц уменьшаются таблицы страниц, и процессор тратит меньше времени на управление памятью
+ALTER SYSTEM SET min_wal_size = '1GB'; -- увеличили размер WAL файла, чтобы уведичить время сброса его на диск 
+ALTER SYSTEM SET max_wal_size = '4GB'; -- увеличили размер WAL файла, чтобы уведичить время сброса его на диск 
+ALTER SYSTEM SET max_worker_processes = '8'; -- определяет максимальное число фоновых процессов, которое разрешено запускать на сервере.
+ALTER SYSTEM SET max_parallel_workers = '32'; --максимальное число рабочих процессов, которое система сможет поддерживать для параллельных операций. Соотношение max_worker_processes к max_parallel_workers должно равняться числу ядер CPU.
+ALTER SYSTEM SET checkpoint_timeout = '60m'; --рекомендуемое - от 30 минут до часа. Ставим 1 час.
+```
 ## 3.нагрузить кластер через утилиту через утилиту pgbench (https://postgrespro.ru/docs/postgrespro/14/pgbench)
 ## 4.написать какого значения tps удалось достичь, показать какие параметры в какие значения устанавливали и почему
