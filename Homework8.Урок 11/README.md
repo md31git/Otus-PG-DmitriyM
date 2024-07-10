@@ -6,27 +6,21 @@
 * ОЗУ = 8Гб
 * Диск = HDD
 
-## 2. Настройки по умолчанию и тест производительности 
-Настройи по умолчанию PG:
-name                        |value    |
-----------------------------+---------+
-checkpoint_completion_target|0.9      |
-checkpoint_timeout          |300s     |
-effective_cache_size        |5242888kB|
-huge_pages                  |try      |
-maintenance_work_mem        |65536kB  |
-max_connections             |100      |
-max_parallel_workers        |8        |
-max_wal_size                |1024MB   |
-max_worker_processes        |8        |
-min_wal_size                |80MB     |
-shared_buffers              |163848kB |
-synchronous_commit          |on       |
-wal_buffers                 |5128kB   |
-wal_level                   |replica  |
-work_mem                    |4096kB   |
+### Установка pgbench
+Для использования утилиты необходимо ее инициализировать: создаются набор таблиц для использования в нагрузке в указанной БД testdb. Запуск от имени пользователя postgres
 
-Запуск 
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/30c164ce-9d00-48aa-9659-cf208a1c2d45)
+
+## 2. Настройки по умолчанию и тест производительности 
+Изначально решено произвести нагрузку при значениях настроек PG по умолчанию для наглядности результатов.
+
+Настройи по умолчанию PG:
+
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/063d1cf8-5966-47f7-b40e-640f49ceee6c)
+
+Здесь отобраны наиболее значимые для производительности параметры PG. 
+
+
 
 
 
