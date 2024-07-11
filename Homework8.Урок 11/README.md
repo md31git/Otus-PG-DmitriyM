@@ -28,6 +28,9 @@
 
 Запуск нагрузки согласно настройкам:
 
+```bash
+pgbench -c 100 -j 4 -P 20 -T 60 testdb
+```
 ![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/928c32f6-6004-4ed5-9430-15e31620cbbb)
 
 **Результат**: tps = 4.879987
@@ -43,17 +46,37 @@ ALTER SYSTEM SET autovacuum = 'off'; -- отключаем автовакуум,
 ALTER SYSTEM SET synchronous_commit = 'off'; -- включаем ассинхронную зваись WAL на диск не дожидаясь подтверждения
 ALTER SYSTEM SET wal_level = 'minimal'; -- включаем минимальное логирование данных (нет репликации)
 ALTER SYSTEM SET max_connections = '100'; -- оставляем без изменений (кол-во полþзователей * 2)
-ALTER SYSTEM SET shared_buffers = '3.2GB'; -- рекомендация от 25% до 40%, ставим 40% по верхней границе
 ALTER SYSTEM SET effective_cache_size = '6GB'; -- рекомендация 75%,
 ALTER SYSTEM SET maintenance_work_mem = '512MB'; -- берем данные из https://pgtune.leopard.in.ua/#/ 
 ALTER SYSTEM SET wal_buffers = '100MB'; -- увеличиваем размер буфера как 1/32 от **shared_buffers**
 ALTER SYSTEM SET work_mem = '5242kB'; -- увеличиваем до 32Mb. 50 соединений *32Mb = 1.6ГБ - не превышает shared_buffers.
-ALTER SYSTEM SET huge_pages = 'on'; -- В результате использования огромных страниц уменьшаются таблицы страниц, и процессор тратит меньше времени на управление памятью
 ALTER SYSTEM SET min_wal_size = '1GB'; -- увеличили размер WAL файла, чтобы уведичить время сброса его на диск 
 ALTER SYSTEM SET max_wal_size = '4GB'; -- увеличили размер WAL файла, чтобы уведичить время сброса его на диск 
 ALTER SYSTEM SET max_worker_processes = '8'; -- определяет максимальное число фоновых процессов, которое разрешено запускать на сервере.
 ALTER SYSTEM SET max_parallel_workers = '32'; --максимальное число рабочих процессов, которое система сможет поддерживать для параллельных операций. Соотношение max_worker_processes к max_parallel_workers должно равняться числу ядер CPU.
-ALTER SYSTEM SET checkpoint_timeout = '60m'; --рекомендуемое - от 30 минут до часа. Ставим 1 час.
+ALTER SYSTEM SET checkpoint_timeout = '60min'; --рекомендуемое - от 30 минут до часа. Ставим 1 час.
+ALTER SYSTEM SET max_wal_senders = 0; -- зависмый параметры - нужно ставить 0 (по умолчанию 10) если wal_level = 'minimal', иначе сервер не запускается пишет ошибку (см ниже) 
+ALTER SYSTEM SET shared_buffers = '3.2GB'; -- рекомендация от 25% до 40%, ставим 25%.
+--ALTER SYSTEM SET huge_pages = 'on'; -- В результате использования огромных страниц уменьшаются таблицы страниц, и процессор тратит меньше времени на управление памятью. Получаем ошибку 
 ```
-## 3.нагрузить кластер через утилиту через утилиту pgbench (https://postgrespro.ru/docs/postgrespro/14/pgbench)
-## 4.написать какого значения tps удалось достичь, показать какие параметры в какие значения устанавливали и почему
+Параметр max_wal_senders был установлен в значение 0 из-за ошибки FATAL:  WAL streaming (max_wal_senders > 0) requires wal_level "replica" or "logical".
+
+Параметр huge_pages оставлен без изменений, т.к. при значении huge_pages = 'on' возникает ошибка FATAL:  could not map anonymous shared memory: Cannot allocate memory. Видимо сервис не запустился из-за того что  большие страницы не определены в системе (или их недостаточно).
+
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/32a4078b-7a13-48a0-843f-050658de8013)
+ 
+Перегружаем служубу PG  и проверям текущие значения параметров:
+
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/d2a42c9a-7b73-494c-93d2-8e1918dcddca)
+
+## 3.нагрузить кластер через утилиту через утилиту pgbench на измененных параметрах PG. Написать какого значения tps удалось достичь, показать какие параметры в какие значения устанавливали и почему
+Запуск нагрузки согласно настройкам:
+
+```bash
+pgbench -c 100 -j 4 -P 20 -T 60 testdb
+```
+![image](https://github.com/md31git/Otus-PG-DmitriyM/assets/108184930/333b4d01-4dd8-49b5-bc68-3180038efeb2)
+
+**Результат**: tps = 1369.654763
+
+## 4.
