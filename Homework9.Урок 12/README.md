@@ -60,5 +60,29 @@ sudo -u postgres pg_dump -d testdb2 --create -Fc > /backup/testdb2_bk.gz
 
 
 ## 7.Используя утилиту pg_restore восстановим в новую БД только вторую таблицу!
+При восстановлнии были использованы дополнительные фалги: verbose -для вывода читаемого вида ошибок, single-transaction - чтобы операция была атомарной, -n test - только объекты из схемы test восстанавливать, -t pay2 - только таблицу pay2.
+```bach
+sudo -u postgres createdb testdb3 && sudo -u postgres pg_restore -d testdb3 --verbose --single-transaction -n test -t pay2 /backup/testdb2_bk.g
+```
+![image](https://github.com/user-attachments/assets/2d23b022-343f-477b-a2c0-130e9dcc215d)
+
+Ошибка возникла, т.к. при указании таблицы или таблиц при восстановлении не восстанавлиаются объекты, от которых может зависеть таблица, в т.ч. и схема.
+
+![image](https://github.com/user-attachments/assets/2ed23234-486c-4047-8d05-dc65584cf3e5)
+
+Т.е. БД уже создана предудущей командой, необходимо вручную создать схему test в testdb3:
+
+![image](https://github.com/user-attachments/assets/bde231f2-360e-4f0a-8aca-2f333e352ddb)
+
+После этого выполним вторую часть комнады, которая "упала" в ошибку и проверим что таблица test.pay2 создалась и заполнилась данными (проверяем первые 10 строк для сокращения вывода):
+
+```bach
+sudo -u postgres pg_restore -d testdb3 --verbose --single-transaction -n test -t pay2 /backup/testdb2_bk.gz
+```
+![image](https://github.com/user-attachments/assets/5206c898-918a-4a2c-893f-74769b060270)
+
+
+
+
 
 
