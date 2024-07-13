@@ -49,5 +49,16 @@ create table test.Pay1 as select t.id:: int, 'Наименование '||t.id::
 Вывод: можно восстанавливать в любую таблицу из файлов, главное чтобы кол-во колонок, а также типы были совместимы (не обязательно такие же как у исходной таблицы) и согласовывались по размерам с данными. 
 
 ## 6.Используя утилиту pg_dump создадим бэкап в кастомном сжатом формате двух таблиц
+Предварительно дал полные права на папку, т.к. при попытки выполнить дамп была ошибка: -bash: /backup/testdb2_bk.gz: Permission denied
+
+![image](https://github.com/user-attachments/assets/2f41cf6e-70bf-433c-9a0c-277b99d47d18)
+
+```bach
+sudo -u postgres pg_dump -d testdb2 --create -Fc > /backup/testdb2_bk.gz
+```
+![image](https://github.com/user-attachments/assets/b8f55250-c452-471b-a5b2-59a292804c7d)
+
 
 ## 7.Используя утилиту pg_restore восстановим в новую БД только вторую таблицу!
+
+
