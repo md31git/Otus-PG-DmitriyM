@@ -66,10 +66,40 @@ SELECT pg_size_pretty(pg_total_relation_size('test.mrecords'));
 
 **Размер 57Мб**
 
+## 5.Тест №1
+Исходные данные по "мертвым" записям и дата autovacuum
+![image](https://github.com/user-attachments/assets/b466d9b2-2a2d-4514-9c22-d324b21058f4)
 
-5 раз обновить все строчки и добавить к каждой строчке любой символ
-Посмотреть количество мертвых строчек в таблице и когда последний раз приходил автовакуум
-Подождать некоторое время, проверяя, пришел ли автовакуум
+### 5 раз обновить все строчки и добавить к каждой строчке любой символ
+```bash
+do
+$$
+declare 
+  i record;
+begin
+  for i in 1..5 loop
+    update test.mrecords
+    set name=name||1;
+  end loop;
+end;
+$$
+```
+![image](https://github.com/user-attachments/assets/9664c608-33c8-4b46-a223-b801f229d61e)
+
+### Посмотреть количество мертвых строчек в таблице и когда последний раз приходил автовакуум
+```bash
+SELECT relname, n_live_tup, n_dead_tup,
+        trunc(100*n_dead_tup/(n_live_tup+1))::float AS "ratio%", last_autovacuum
+FROM pg_stat_user_tables WHERE relname = 'mrecords';
+```
+![image](https://github.com/user-attachments/assets/deb03e99-d29f-4eb9-81b5-0ff826d07965)
+
+Раз мы выполнили 5 раз обновление всех строк, то и мертвых строк будет 5*кол-во обновленных строк = 5 млн.
+
+### Подождать некоторое время, проверяя, пришел ли автовакуум
+
+
+## 6.Тест №1
 5 раз обновить все строчки и добавить к каждой строчке любой символ
 Посмотреть размер файла с таблицей
 Отключить Автовакуум на конкретной таблице
