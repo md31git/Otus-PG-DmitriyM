@@ -151,6 +151,8 @@ CREATE TABLE test.test2(test_id int, decription varchar(100));
 ```
 ![image](https://github.com/user-attachments/assets/3d3ff8d8-ea7b-48e0-b2c0-29c085ff8a11)
 
+**Внимание! Тут остается wal_level = replica, т.к. на 3 Кластере не надо создавать публикации, а создаем только подписки**
+
 Создаем подписки на таблицы с первоначальным копированим данных (copy_data = true) и проверяем что они создались и данные скопированы:
 ```bash
 CREATE SUBSCRIPTION test_sub3 
@@ -162,3 +164,20 @@ CONNECTION 'host=localhost port=5433 user=postgres password=pass5433 dbname=db'
 PUBLICATION test2_pub2 WITH (copy_data = true);
 ```
 ![image](https://github.com/user-attachments/assets/0c513fcf-d375-4c86-8146-907ed34a5101)
+
+Проверем что репликация работает. Заходим на Кластер 1 и создаем 2 записи в таблице test.test.
+
+![image](https://github.com/user-attachments/assets/f5290d3b-da05-4ee3-aeba-83a64d418814)
+
+Переходим на кластер 3 и проверяем наличие двух новых добавленных записей:
+
+![image](https://github.com/user-attachments/assets/2ca9ca1c-1571-46ad-8055-1566f1750ba9)
+
+Логическая репликаия работает!
+
+## 6. Реализовать горячее реплицирование для высокой доступности на Кластере 4. Источником должна выступать Кластер 3. Написать с какими проблемами столкнулись
+Здесь будем использовать физисекую репликацию:
+```bash
+
+```
+
