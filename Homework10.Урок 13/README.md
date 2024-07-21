@@ -139,7 +139,26 @@ tail -n 10 /var/log/postgresql/postgresql-14-main.log
 
 ![image](https://github.com/user-attachments/assets/55b3dac7-f2f5-467b-a762-7d35cd74f75d)
 
-## 5.3 ВМ использовать как реплику для чтения и бэкапов (подписаться на таблицы из ВМ №1 и №2 ).
+## 5.Кластер 3 использовать как реплику для чтения и бэкапов (подписаться на таблицы из ВМ №1 и №2 ).
+Заходим в Кластер 3 и создаем необходимую структуру для репликации:
+```bash
+sudo -u postgres psql -d postgres -p 5434
+CREATE Database dbtest;
+\c dbtest
+CREATE schema test;
+CREATE TABLE test.test(id int, name varchar(100));
+CREATE TABLE test.test2(test_id int, decription varchar(100));
+```
+![image](https://github.com/user-attachments/assets/3d3ff8d8-ea7b-48e0-b2c0-29c085ff8a11)
 
+Создаем подписки на таблицы с первоначальным копированим данных (copy_data = true) и проверяем что они создались и данные скопированы:
+```bash
+CREATE SUBSCRIPTION test_sub3 
+CONNECTION 'host=localhost port=5432 user=postgres password=pass5432 dbname=db' 
+PUBLICATION test_pub1 WITH (copy_data = true);
 
-
+CREATE SUBSCRIPTION test2_sub3 
+CONNECTION 'host=localhost port=5433 user=postgres password=pass5433 dbname=db' 
+PUBLICATION test2_pub2 WITH (copy_data = true);
+```
+![image](https://github.com/user-attachments/assets/0c513fcf-d375-4c86-8146-907ed34a5101)
