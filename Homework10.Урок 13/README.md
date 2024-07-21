@@ -176,8 +176,52 @@ PUBLICATION test2_pub2 WITH (copy_data = true);
 Логическая репликаия работает!
 
 ## 6. Реализовать горячее реплицирование для высокой доступности на Кластере 4. Источником должна выступать Кластер 3. Написать с какими проблемами столкнулись
-Здесь будем использовать физисекую репликацию:
-```bash
+Здесь будем использовать физическую репликацию.
 
+Проверяем что кластер работает и смотрим содержимое списка БД в кластере 4. Здесь тоже wal_level = replica
+```bash
+pg_lsclusters
+sudo pg_ctlcluster 14 main4 start
+sudo -u postgres psql -d postgres -p 5435
+\l
+Exit 
 ```
+![image](https://github.com/user-attachments/assets/a4541098-85a6-4275-b7e3-20d24519c729)
+
+Затем останавливаем Кластер 4 и удаляем его содержимое, чтобы можно было востановить туда данные из Кластера 3 и включить физическую репликацию.
+```bash
+sudo pg_ctlcluster 14 main4 stop
+sudo rm -rf /var/lib/postgresql/14/main4
+sudo -u postgres pg_basebackup -p 5433 -R -D /var/lib/postgresql/14/main4
+sudo chown postgres -R /var/lib/postgresql/14/
+sudo -u postgres pg_basebackup -p 5433 -R -D /var/lib/postgresql/14/main4
+```
+![image](https://github.com/user-attachments/assets/4355ce37-dd7b-4f1d-a986-c1926fb31846)
+
+Пришлось дать права владельца на папку /var/lib/postgresql/14 пользователю postgres, иначе у него не было прав там созавать новую папку.
+
+Запускаем сервер и смотрим состояние репликации и содержимое кластера (должно быть равно Кластеру 3)
+```bash
+sudo pg_ctlcluster 14 main4 start
+pg_lsclusters
+sudo -u postgres psql -d dbtest -p 5435
+select * from test.test;
+select * from test.test2;
+```
+![image](https://github.com/user-attachments/assets/fa35c938-68f8-432e-be3c-d189550654da)
+
+Проверяем что физическая репликация работает на реплике (Кластер 4):
+
+```bash
+select * from pg_stat_wal_receiver \gx
+```
+![image](https://github.com/user-attachments/assets/c331e5e4-fd7b-4feb-8f1a-466b500cb8e1)
+
+Проверяем что физическая репликация работает на мастере (Кластер 3):
+
+```bash
+sudo -u postgres psql -p 5434
+SELECT * FROM pg_stat_replication \gx
+```
+![image](https://github.com/user-attachments/assets/6a77bb07-94d9-4fff-b640-dd8afb0b31e7)
 
