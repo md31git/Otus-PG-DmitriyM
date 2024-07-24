@@ -1,5 +1,5 @@
 ## 1.Настройте выполнение контрольной точки раз в 30 секунд.
-Заходим в PG и устанавиваем значение параметра checkpoint_timeout = 30 секунд. Контрольная точка будет происходить раз в 30 секунд. 
+Заходим в PG и устанавливаем значение параметра checkpoint_timeout = 30 секунд. Контрольная точка будет происходить раз в 30 секунд. 
 ```bash
 sudo -u postgres psql -d postgres -p 5433
 Show checkpoint_timeout;
@@ -15,7 +15,7 @@ select pg_current_wal_insert_lsn(), pg_current_wal_lsn();
 
 Запомним полученный LSN: 0/23A1360
 
-А также просмативаем и сбрасываем накопленную статистику по созданию котрольных точек.
+А также просматриваем и сбрасываем накопленную статистику по созданию контрольных точек.
 ```bash
 SELECT * FROM pg_stat_bgwriter \gx
 SELECT pg_stat_reset_shared('bgwriter');
@@ -43,7 +43,7 @@ select pg_current_wal_insert_lsn(), pg_current_wal_lsn();
 ```
 ![image](https://github.com/user-attachments/assets/86b6fddd-413a-4147-92e0-8c123e0496bc)
 
-Объем журнала получаем как разница между двумя LSN (текузей и до нагрузки) в Мб.
+Объем журнала получаем как разница между двумя LSN (текущей и до нагрузки) в Мб.
 ```bash
 select ('0/3030ED0'::pg_lsn - '0/23A1360'::pg_lsn)/1024/1024;
 ```
@@ -52,15 +52,15 @@ select ('0/3030ED0'::pg_lsn - '0/23A1360'::pg_lsn)/1024/1024;
 **Итого объем журнала WAL при подачи нагрузки pgbench 10 мин составил примерно 12.5МБ**
 
 ## 4.Проверьте данные статистики: все ли контрольные точки выполнялись точно по расписанию. Почему так произошло?
-Сразу после окончания нагрузки было выполнено получение статистики по контрольным точкам. Иначе котрольные точки будут создаваться каждые 30сек исходя из настройки, установленной выше.
+Сразу после окончания нагрузки было выполнено получение статистики по контрольным точкам. Иначе контрольные точки будут создаваться каждые 30сек исходя из настройки, установленной выше.
 ```bash
 SELECT * FROM pg_stat_bgwriter \gx
 ```
 ![image](https://github.com/user-attachments/assets/353d79ed-d435-4860-86f7-7b549f2539ec)
 
 Итоги:
-* Всего было выполнено checkpoints_timed = 34 котрольные точки по расписанию. 
-* Внеплановых (выполенных по превышению объема max_wal_size) контрольный точек не было checkpoints_req = 0. Т.к. max_wal_size= 1Гб, а на котрольную точку приходилось по 12.5МБ/34 = 0.36Мб. 
+* Всего было выполнено checkpoints_timed = 34 контрольные точки по расписанию. 
+* Внеплановых (выполненных по превышению объема max_wal_size) контрольный точек не было checkpoints_req = 0. Т.к. max_wal_size= 1Гб, а на контрольную точку приходилось по 12.5МБ/34 = 0.36Мб. 
 
 ## 5.Сравните tps в синхронном/асинхронном режиме утилитой pgbench. Объясните полученный результат.
 Включаем ассинхронный режим synchronous_commit = off, т.к. в синхронном режиме записи WAL мы уже прогоняли нагрузку. 
@@ -81,3 +81,58 @@ pgbench -c 10 -j 4 -P 60 -T 600 postgres
 **Итоговый tps = 35.180802**. Скорость возросла боьеш чем на 15%.
 
 ## 6.Создайте новый кластер с включенной контрольной суммой страниц. Создайте таблицу. Вставьте несколько значений. Выключите кластер. Измените пару байт в таблице. Включите кластер и сделайте выборку из таблицы. Что и почему произошло? как проигнорировать ошибку и продолжить работу?
+### Создайте новый кластер с включенной контрольной суммой страниц
+```bash
+sudo pg_createcluster -d /var/lib/postgresql/14/main5 14 main5 -- --data-checksums
+sudo pg_ctlcluster 14 main5 start
+```
+![image](https://github.com/user-attachments/assets/defc4e5c-090b-49d9-80cd-7eb2e11ba591)
+
+### Создайте таблицу. Вставьте несколько значений.
+Подключаемся к новому кластеру, создаем БД, схему и в ней таблицу для теста
+```bash
+pg_lsclusters
+sudo -u postgres psql -d postgres -p 5436
+CREATE Database db;
+CREATE schema test;
+CREATE TABLE test.test as select generate_series as id, substr(md5(random()::text), 1, 25)::varchar(100) as name from generate_series(1,5,1);
+select * from test.test;
+```
+![image](https://github.com/user-attachments/assets/1af66786-da90-4b00-b52d-6cdf6b5d4af6)
+
+### Выключите кластер. Измените пару байт в таблице.
+Определяем путь к файлу, где лежит таблица:
+```bash
+SELECT pg_relation_filepath('test.test'); 
+```
+![image](https://github.com/user-attachments/assets/56f53c8c-3945-46f3-81be-f33cdc11be21)
+
+Останавливаем кластер, заходим под postgres и редактируем файл таблицы (удаляем пару символов из файла):
+```bash
+sudo pg_ctlcluster 14 main5 stop
+sudo su postgres
+nano /var/lib/postgresql/14/main5/base/16384/16386
+exit
+```
+![image](https://github.com/user-attachments/assets/8cd6cae6-75a1-4049-9f86-0ce30f36a644)
+
+### Включите кластер и сделайте выборку из таблицы.
+```bash
+sudo pg_ctlcluster 14 main5 start
+sudo -u postgres psql -d db -p 5436
+select * from test.test;
+show data_checksums;
+show ignore_checksum_failure;
+```
+![image](https://github.com/user-attachments/assets/4730d6bb-49d3-4368-9ca0-dd342cbf7c97)
+
+Таблица стала пустой, хотя я ожидал ошибку, т.к. настройка ignore_checksum_failure установлена была в значение off.
+
+### Что и почему произошло? как проигнорировать ошибку и продолжить работу?
+Чтобы игнорировать ошибку необходимо включить значение ignore_checksum_failure = on
+```bash
+alter system set ignore_checksum_failure = on;
+SELECT pg_reload_conf();
+show ignore_checksum_failure;
+```
+![image](https://github.com/user-attachments/assets/cdfa4776-9139-4a43-90f5-b984e94c6b49)
