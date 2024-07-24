@@ -1,13 +1,25 @@
 ## 1.Настройте выполнение контрольной точки раз в 30 секунд.
 Заходим в PG и устанавиваем значение параметра checkpoint_timeout = 30 секунд. Контрольная точка будет происходить раз в 30 секунд. 
 ```bash
-sudo -u postgres psql -d postgres -p 5432
+sudo -u postgres psql -d postgres -p 5433
 Show checkpoint_timeout;
 alter system set checkpoint_timeout = 30;
 SELECT pg_reload_conf();
 Show checkpoint_timeout;
 ```
-![image](https://github.com/user-attachments/assets/dc499d77-c7b8-4744-97fc-8a2592a9504a)
+А также получаем последний LSN (идентификатор записи) в журнале WAL. Он нужен чтобы сравнить его с LSN полученным после нагрузки.
+```bash
+select pg_current_wal_insert_lsn(), pg_current_wal_lsn();
+```
+![image](https://github.com/user-attachments/assets/5faf8c0f-dc31-4ad5-bc53-16093e7cf040)
+
+А также просмативаем и сбрасываем накопленную статистику по созданию котрольных точек.
+```bash
+SELECT * FROM pg_stat_bgwriter \gx
+SELECT pg_stat_reset_shared('bgwriter');
+SELECT * FROM pg_stat_bgwriter \gx
+```
+![image](https://github.com/user-attachments/assets/ada2d4d9-2d71-4683-b155-7027006677cf)
 
 ## 2.10 минут c помощью утилиты pgbench подавайте нагрузку.
 
