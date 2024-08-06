@@ -105,28 +105,29 @@ select * from test.test;
 ```bash
 SELECT pg_relation_filepath('test.test'); 
 ```
-![image](https://github.com/user-attachments/assets/56f53c8c-3945-46f3-81be-f33cdc11be21)
+![image](https://github.com/user-attachments/assets/191426c1-c1c2-456c-a358-afb95f20852d)
 
-Останавливаем кластер, заходим под postgres и редактируем файл таблицы (удаляем пару символов из файла):
+Останавливаем кластер, заходим под postgres и редактируем файл таблицы (удаляем пару символов из файла). 
 ```bash
 sudo pg_ctlcluster 14 main5 stop
 sudo su postgres
-nano /var/lib/postgresql/14/main5/base/16384/16386
+vim -b /var/lib/postgresql/14/main5/base/16384/24587
 exit
 ```
-![image](https://github.com/user-attachments/assets/8cd6cae6-75a1-4049-9f86-0ce30f36a644)
+![image](https://github.com/user-attachments/assets/3360c082-7bd2-4f35-bdcb-bee336e2cc07)  !!!!
+**Внимание. Если удалим символы в начале файла, то скорее всего повредим заголовок и таблица станет пустой. Поэтому меняем символы ближе к концу файла.
+А также необходими редактировать через vim с опцией -b вместо nano чтобы были именно испорчены данные, а не таблица в целом, иначе таблица при открытии после радактирования просто будет пустой.**
+
 
 ### Включите кластер и сделайте выборку из таблицы.
 ```bash
 sudo pg_ctlcluster 14 main5 start
 sudo -u postgres psql -d db -p 5436
 select * from test.test;
-show data_checksums;
-show ignore_checksum_failure;
 ```
-![image](https://github.com/user-attachments/assets/4730d6bb-49d3-4368-9ca0-dd342cbf7c97)
+![image](https://github.com/user-attachments/assets/b68a2cf2-08c3-452f-a61b-e3e9ec8e8800)
 
-Таблица стала пустой, хотя я ожидал ошибку, т.к. настройка ignore_checksum_failure установлена была в значение off.
+Возникла ошибка что нарушена контрольная сумма таблицы. 
 
 ### Что и почему произошло? как проигнорировать ошибку и продолжить работу?
 Чтобы игнорировать ошибку необходимо включить значение ignore_checksum_failure = on
@@ -134,5 +135,8 @@ show ignore_checksum_failure;
 alter system set ignore_checksum_failure = on;
 SELECT pg_reload_conf();
 show ignore_checksum_failure;
+select * from test.test;
 ```
-![image](https://github.com/user-attachments/assets/cdfa4776-9139-4a43-90f5-b984e94c6b49)
+![image](https://github.com/user-attachments/assets/a3864409-733c-4e09-8d07-91e9510937df)
+
+В итоге была испорчена первая строка таблицы и она исчезла (вместо 5 строк стало 4), но данные вывелись с предупреждением выше о нарушении контрольной суммы. 
