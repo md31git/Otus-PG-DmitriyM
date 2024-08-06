@@ -105,19 +105,20 @@ select * from test.test;
 ```bash
 SELECT pg_relation_filepath('test.test'); 
 ```
-![image](https://github.com/user-attachments/assets/191426c1-c1c2-456c-a358-afb95f20852d)
+![image](https://github.com/user-attachments/assets/164338a9-1f2e-4522-b2aa-d589a3a6cbe3)
+
 
 Останавливаем кластер, заходим под postgres и редактируем файл таблицы (удаляем пару символов из файла). 
 ```bash
 sudo pg_ctlcluster 14 main5 stop
 sudo su postgres
-vim -b /var/lib/postgresql/14/main5/base/16384/24587
+nano /var/lib/postgresql/14/main5/base/16384/24590
 exit
 ```
-![image](https://github.com/user-attachments/assets/3360c082-7bd2-4f35-bdcb-bee336e2cc07)  !!!!
-**Внимание. Если удалим символы в начале файла, то скорее всего повредим заголовок и таблица станет пустой. Поэтому меняем символы ближе к концу файла.
-А также необходими редактировать через vim с опцией -b вместо nano чтобы были именно испорчены данные, а не таблица в целом, иначе таблица при открытии после радактирования просто будет пустой.**
+![image](https://github.com/user-attachments/assets/c66ebfc4-7938-43f4-b208-91f83a2aa362)
 
+**Внимание. Если удалим символы в начале файла, то скорее всего повредим заголовок и таблица станет пустой. Поэтому меняем символы ближе к концу файла.
+А также необходими именно добавить новые символы. Если произвести удаление, то таблица в итоге будет пустой при открытии**
 
 ### Включите кластер и сделайте выборку из таблицы.
 ```bash
@@ -125,7 +126,7 @@ sudo pg_ctlcluster 14 main5 start
 sudo -u postgres psql -d db -p 5436
 select * from test.test;
 ```
-![image](https://github.com/user-attachments/assets/b68a2cf2-08c3-452f-a61b-e3e9ec8e8800)
+![image](https://github.com/user-attachments/assets/13175204-d4ac-48e1-b101-100f8d71f380)
 
 Возникла ошибка что нарушена контрольная сумма таблицы. 
 
@@ -137,6 +138,6 @@ SELECT pg_reload_conf();
 show ignore_checksum_failure;
 select * from test.test;
 ```
-![image](https://github.com/user-attachments/assets/a3864409-733c-4e09-8d07-91e9510937df)
+![image](https://github.com/user-attachments/assets/23c5fae6-ce9d-441a-8bbe-3edc2f5ecda3)
 
-В итоге была испорчена первая строка таблицы и она исчезла (вместо 5 строк стало 4), но данные вывелись с предупреждением выше о нарушении контрольной суммы. 
+В итоге была испорчена первая строка таблицы и она исчезла (вместо 5 строк стало 4), а также именились данные во 2-ой строке (в файл мы их и меняли), но данные вывелись с предупреждением выше о нарушении контрольной суммы. 
