@@ -53,7 +53,7 @@ where txt_ts @@ to_tsquery('ocean');
 ```
 ![image](https://github.com/user-attachments/assets/f4fbf13e-1ca9-4173-85cc-469f95b255cc)
 
-Время работы без индекса 16 мс. 
+Время работы без индекса 16 мс. Без индекса требуется полное сканирование таблицы Seq scan
 
 ```bash
 create index ix_pay_txt_ts on test.pay using GIN (txt_ts);
@@ -65,10 +65,38 @@ where txt_ts @@ to_tsquery('ocean');
 ```
 ![image](https://github.com/user-attachments/assets/de8a1a8f-2645-451a-9dc9-297570810b11)
 
-Время работы без индекса 1 мс. Что в 16 раз быстрее.
+Время работы без индекса 1 мс. Что в 16 раз быстрее. 
 
 ## 4.Реализовать индекс на часть таблицы или индекс на поле с функцией
+Чтобы индекс занимал меньше места и по нему был быстрее поиск определенных запросов, то используется частичный индекс с выражением where
+```bash
+EXPLAIN ANALYZE 
+select P.id, p.name 
+from test.Pay P
+where status = 'ok';
+```
+![image](https://github.com/user-attachments/assets/90674bbb-f359-4d65-a95a-a00c5586702c)
+
+Тут опять используется оператор filter и сканирование таблицы.
+```bash
+create index ix_pay_status on test.pay(id) include (name) where status='ok';
+
+EXPLAIN ANALYZE 
+select P.id, p.name 
+from test.Pay P
+where status = 'ok';
+```
+![image](https://github.com/user-attachments/assets/b71c2f8a-8b4d-4732-adfc-1343300e4770)
+
+Был создан индекс, который полносью содержаит все поля для выборки, а также он создан на часть таблицы. И поэтому здесь используется Index only scan, т.е. PG обращается только к индексу без обращения к даным таблице, т.е. у нас "покрывающий" индекс.
 
 ## 5.Создать индекс на несколько полей
-## 6.Написать комментарии к каждому из индексов
-## 7.Описать что и как делали и с какими проблемами столкнулись
+```bash
+create index ix_pay_status on test.pay(id) include (name) where status='ok';
+
+EXPLAIN ANALYZE 
+select P.id, p.name 
+from test.Pay P
+where status = 'ok';
+```
+
