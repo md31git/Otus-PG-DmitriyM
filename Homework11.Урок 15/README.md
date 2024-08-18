@@ -92,11 +92,41 @@ where status = 'ok';
 
 ## 5.Создать индекс на несколько полей
 ```bash
-create index ix_pay_status on test.pay(id) include (name) where status='ok';
-
-EXPLAIN ANALYZE 
-select P.id, p.name 
+EXPLAIN ANALYZE
+select P.id, p.name
 from test.Pay P
-where status = 'ok';
+where name='pay1167' and status = 'error';
 ```
+![image](https://github.com/user-attachments/assets/f32c841f-fdf2-46f3-b43a-da0bc6babee3)
 
+Как видим из плана выполнения PG удалил из выборки 99999 не совпадающих значений и при этом сканировал таблицу полностью.
+
+```bash
+create index ix_pay_name on test.pay(name, status);
+
+EXPLAIN ANALYZE
+select P.id, p.name
+from test.Pay P
+where name='pay1167' and status = 'error';
+```
+![image](https://github.com/user-attachments/assets/7cd5ed71-35d8-4e5f-b516-d18622ae6edc)
+
+Теперь используется составной индекс по двум полям. Причем первым по порядку полем было выбрано именно name, т.к. оно имеет лучшую селекстивность, что повышает эффективность индекса. 
+
+Запросы, где будет только фильтрация по полю name тоже будудет использоваться индекс. Но план уже будет другой.
+```bash
+EXPLAIN ANALYZE
+select P.id, p.name
+from test.Pay P
+where name='pay1167';
+```
+![image](https://github.com/user-attachments/assets/951b547d-c868-4320-933f-8fb71fb3e7bd)
+
+В то же время если будет фильтрация только по полю status, то индекс использоваться не будет, т.к. в составном индексе главное последовательность полей в индексе. 
+```bash
+EXPLAIN ANALYZE
+select P.id, p.name
+from test.Pay P
+where status = 'error';
+```
+![image](https://github.com/user-attachments/assets/d77131a7-8377-4c84-a5f4-181c83b6fb31)
