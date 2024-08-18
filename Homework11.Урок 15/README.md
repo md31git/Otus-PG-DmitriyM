@@ -1,28 +1,23 @@
 ## 1.Создание двух таблиц для теста
-Создаме таблицу платежей test.pay и таблицу детализаций платежей с суммами test.pay_detail
+Создаем таблицу платежей test.pay.
 ```bash
 create table if not exists test.Pay as
 SELECT
   s as "id",
   format('pay%s', (round((random() * 10000)::numeric,0))::text) as "name",
   (array['ok', 'error', 'process'])[floor(random() * 3 + 1)] as "status",
-   md5(random()::text) as "external_code"
+   md5(random()::text) as "external_code",
+   concat_ws(' ', (array['green', 'red', 'black', 'white', 'grey', 'blue'])[(random() * 6)::int],
+                  (array['like', 'go', 'swim', 'drive', 'get', 'quess'])[(random() * 6)::int],
+                  (array['home', 'field', 'mountain', 'rock', 'ocean', 'garden'])[(random() * 6)::int]) as "txt"
 FROM
   generate_series(1, 10000) s;
-  
- create table if not exists test.Pay_Detail as
- SELECT
-  row_number() over (order by P.id) as "Id",
-  P.id as "pay_id",
-  round((random() * 10)::numeric,0) as "service_id",
-  round((random() * 1000)::numeric,2) as "summ"
-FROM test.Pay P
-CROSS JOIN generate_series(1, P.id % 5) s;
 ```
-![image](https://github.com/user-attachments/assets/ae6c0c48-f60e-4db9-b3d9-f3525bf96a78)
+![image](https://github.com/user-attachments/assets/ab7b2ad1-dd09-4ea3-aeea-e813fa44ce71)
+
 
 ## 2.Создать индекс к какой-либо из таблиц вашей БД и Прислать текстом результат команды explain, в которой используется данный индекс
-Выборка без индекса занимает 1 мс. Используется оператор Filter, который обозначет фильтрацию даннных без индекса
+Выборка без индекса занимает 1 мс. Используется оператор Filter, который обозначает фильтрацию данных без индекса
 ```bash
 EXPLAIN ANALYZE 
 select P.id, p.name 
@@ -42,7 +37,7 @@ where id>100 and id<200;
 ![image](https://github.com/user-attachments/assets/9fd37a01-f5b1-451c-ad11-f1fc9f5906e3)
 
 ## 3.Реализовать индекс для полнотекстового поиска
-Для полнотекстого поиска будем использовать индекс GIN и для этого создадим еще одно поле в таблице. Оно будет вычисляемое от функции to_tsvector и данных из поля txt. Оно нужно чтобы не вычислять на лету и был существенный выигрыш в скорости поиска.
+Для полнотекстового поиска будем использовать индекс GIN и для этого создадим еще одно поле в таблице. Оно будет вычисляемое от функции to_tsvector и данных из поля txt. Оно нужно чтобы не вычислять на лету и был существенный выигрыш в скорости поиска.
 ```bash
 alter table test.Pay add column txt_ts tsvector GENERATED ALWAYS as (to_tsvector('english',txt)) stored;
 
@@ -88,7 +83,7 @@ where status = 'ok';
 ```
 ![image](https://github.com/user-attachments/assets/b71c2f8a-8b4d-4732-adfc-1343300e4770)
 
-Был создан индекс, который полносью содержаит все поля для выборки, а также он создан на часть таблицы. И поэтому здесь используется Index only scan, т.е. PG обращается только к индексу без обращения к даным таблице, т.е. у нас "покрывающий" индекс.
+Был создан индекс, который полностью содержит все поля для выборки, а также он создан на часть таблицы. И поэтому здесь используется Index only scan, т.е. PG обращается только к индексу без обращения к данным таблице, т.е. у нас "покрывающий" индекс.
 
 ## 5.Создать индекс на несколько полей
 ```bash
@@ -111,9 +106,9 @@ where name='pay1167' and status = 'error';
 ```
 ![image](https://github.com/user-attachments/assets/7cd5ed71-35d8-4e5f-b516-d18622ae6edc)
 
-Теперь используется составной индекс по двум полям. Причем первым по порядку полем было выбрано именно name, т.к. оно имеет лучшую селекстивность, что повышает эффективность индекса. 
+Теперь используется составной индекс по двум полям. Причем первым по порядку полем было выбрано именно name, т.к. оно имеет лучшую селективность, что повышает эффективность индекса. 
 
-Запросы, где будет только фильтрация по полю name тоже будудет использоваться индекс. Но план уже будет другой.
+Запросы, где будет только фильтрация по полю name тоже будет использоваться индекс. Но план уже будет другой.
 ```bash
 EXPLAIN ANALYZE
 select P.id, p.name
@@ -130,3 +125,4 @@ from test.Pay P
 where status = 'error';
 ```
 ![image](https://github.com/user-attachments/assets/d77131a7-8377-4c84-a5f4-181c83b6fb31)
+
