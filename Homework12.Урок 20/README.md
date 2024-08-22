@@ -33,6 +33,7 @@ where tf.flight_id is null;
 Описание: Т.к. мы не указали в select поля из ticket_flights, то испольузется сканирование только индекса и паралельно выбирается 100 записей из flights. Т.к. записей немного, то использется вложенные цикл. Ну и в конце идет сортировка из-за использования distinct.
 
 ## 4.Реализовать кросс соединение двух или более таблиц
+Просто декартовое произведение двух справочников.
 ```Bash
 explain ANALYZE 
 select *
@@ -44,6 +45,32 @@ cross join bookings.airports t;
 Описание: планироващик здесь использует вложенный цикл, т.к. таблицы небольшие. А также Materialize (сохранение в памяти, чтобы не обращаться каждый раз к таблице) по таблицы aircrafts для ускорения выполенния запроса.  
 
 ## 5.Реализовать полное соединение двух или более таблиц
+Выборка купленных билетов на рейс и зарегистрированнх на рейс. Специльно сделана выборка так, чтобы были и спарва и слева записи, которые не соединились.
+```Bash
+explain ANALYZE 
+select tf.Fare_conditions, bp.boarding_no
+from (select * from bookings.ticket_flights where flight_id between 2 and 7) tf
+full join (select * from bookings.boarding_passes  where flight_id between 3 and 8) bp on bp.flight_id = tf.flight_id and bp.ticket_no = tf.ticket_no;
+```
+![image](https://github.com/user-attachments/assets/91451d6e-9a9e-44e2-8b6d-c5853804891a)
+
+Описание: Здест используется сканирование двух таблиц. Причем готовит два запроса для full join паралельно друг другу и использует в итое Full hash join.
+
 ## 6.Реализовать запрос, в котором будут использованы разные типы соединений
-## 7.Сделать комментарии на каждый запрос
+Определяем количество незарегистрированных пасажиро-мест из города Анадырь с группировой по аэропорту прибытия
+```bash
+explain ANALYZE 
+select  
+      f.arrival_airport as "аэропорт прибытия",
+      count(*) as "кол-во мест"
+FROM bookings.ticket_flights tf
+inner join bookings.flights f ON tf.flight_id = f.flight_id
+inner join airports dep on dep.airport_code = f.departure_airport
+left join bookings.boarding_passes bp ON tf.flight_id = bp.flight_id and tf.ticket_no = bp.ticket_no
+where bp.flight_id is null and dep.city = 'Анадырь'
+group by f.arrival_airport;
+```
+![image](https://github.com/user-attachments/assets/fd03786b-d30f-49e6-a010-679b70219b33)
+
+Описание: тут использовается паралелльное агрегация по пачкам. 
 
