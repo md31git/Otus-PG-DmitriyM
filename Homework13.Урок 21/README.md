@@ -40,7 +40,7 @@ language plpgsql;
 ```
 ![image](https://github.com/user-attachments/assets/2babb13f-7a74-4126-9d7e-c424e5fa898b)
 
-### проверяем что все верно создали: 1 родительскую таблицу и 4 секции в ней
+### Проверяем что все верно создали: 1 родительскую таблицу и 4 секции в ней
 ```Bash
 select *
 from pg_partitioned_table;
