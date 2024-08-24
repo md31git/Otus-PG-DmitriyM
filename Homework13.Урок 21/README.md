@@ -17,7 +17,7 @@ limit 1;
 ```
 Эта таблица bookings.boarding_passes. 
 
-### Создаем копию данной таблицы bookings.boarding_passes_part и создаем 4 таблицы секций по хешу, т.к. тут по списку или диапаозону создавать не имеет смысла.
+### Создаем копию данной таблицы bookings.boarding_passes_part и создаем 4 таблицы секций по хешу, т.к. тут по списку или диапазону создавать не имеет смысла.
 ```Bash
 create table bookings.boarding_passes_part (
 	ticket_no bpchar(13) NOT NULL,
@@ -59,8 +59,22 @@ select *
 from bookings.boarding_passes
 limit 10000;
 ```
+![image](https://github.com/user-attachments/assets/e70cab4e-459b-4435-ba7c-99a9c7bab867)
 
 ### Проверим размерность и кол-во записей в секциях и в родительской таблице
 ```Bash
+select pg_size_pretty(pg_table_size('boarding_passes_part')) as main, 
+       pg_size_pretty(pg_table_size('boarding_passes_part_0')) as part0,
+       pg_size_pretty(pg_table_size('boarding_passes_part_1')) as part1,
+       pg_size_pretty(pg_table_size('boarding_passes_part_2')) as part2,
+       pg_size_pretty(pg_table_size('boarding_passes_part_3')) as part3;
+  
+SELECT schemaname,relname,n_live_tup
+FROM pg_stat_user_tables
+where relname like 'boarding_passes_part%'
+ORDER BY n_live_tup DESC;     
 ```
-**Т.к. мы использовали секционирование по хешу и ключ у хеша выбрали равным первичному ключу, то размер и кол-во записей в секции должны быть примерно одинаковыми у всех четерех секций. А в родительской таблице 0 записей, т.к. она служит только для шаблона структуры данных**
+![image](https://github.com/user-attachments/assets/b719b7b8-cced-48f8-9ac8-5cf72dc8f120)
+
+
+**Т.к. мы использовали секционирование по хешу и ключ у хеша выбрали равным первичному ключу, то размер и кол-во записей в секции должны быть примерно одинаковыми у всех четырех секций. А в родительской таблице 0 записей, т.к. она служит только для шаблона структуры данных**
