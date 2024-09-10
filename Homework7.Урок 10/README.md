@@ -34,7 +34,7 @@ commit;
 **3 сессия**
 ```Bash
 sudo tail -n 10 /var/log/postgresql/postgresql-14-main3.log
-``
+```
 ![image](https://github.com/user-attachments/assets/77a9533b-7dc4-4724-a179-cc093c2df73d)
 
 В лог файле видно (выделено желтым), что процесс 26381 блокировал процесс 29332 транзакцией 731  и держал 20 сек (больше 5 сек, т.к. запускались команды по отдельности).
