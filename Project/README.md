@@ -24,8 +24,9 @@ sudo apt-get install freetds-dev freetds-common
 ```bash
 ps aux | grep -i apt
 sudo kill -9 39110
+sudo apt-get install freetds-dev freetds-common
 ```
-![image](https://github.com/user-attachments/assets/3e2baad5-8a44-438c-a98e-0696d0a7a510)
+![image](https://github.com/user-attachments/assets/3f7a0557-70c7-4cd1-84ff-1698df725674)
 Все получилось.
 
 
