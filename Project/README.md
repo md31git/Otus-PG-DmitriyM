@@ -46,11 +46,15 @@ sudo make USE_PGXS=1 install
 Теперь все выполнилось успешно.
 
 ## 5.Настраиваем подключение в базе MS SQL 2019
-
+Настраиваем подключение: астройка FreeTDS для подключения к MS SQL Server выполняется с помощью файла /etc/freetds/freetds.conf
+```bash
+sudo nano /etc/freetds/freetds.conf
+```
 Вместо шаблонной настройки создаем свою
 ![image](https://github.com/user-attachments/assets/92eaea7b-aa46-4c5f-895c-e31d8dbb2457)
 
 Т.к. у меня на локальной машине только один экземляр MS SQL SERVER то instance не указываем
+![image](https://github.com/user-attachments/assets/0fc7631c-5915-4997-a36e-c1dd606a0234)
 
 
 ## 6.Устанавливаем расширение tds_fdw
