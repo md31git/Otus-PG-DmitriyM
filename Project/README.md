@@ -27,7 +27,25 @@ sudo kill -9 39110
 sudo apt-get install freetds-dev freetds-common
 ```
 ![image](https://github.com/user-attachments/assets/3f7a0557-70c7-4cd1-84ff-1698df725674)
-Все получилось.
+Теперь все выполнилось успешно.
+
+## 4.Cкачиваем и собираем tds_fdw
+Скачиваем tds_fdw с github, переходим в скаченную папку и ставим расширение tds_fdw
+```bash
+git clone https://github.com/tds-fdw/tds_fdw.git
+cd tds_fdw
+sudo make USE_PGXS=1 install
+```
+Но возникает ошибки при установке
+![image](https://github.com/user-attachments/assets/6e0d87e0-d4ba-457c-a3e7-a9afed6744b5)
+Решение найдено через установку postgresql-server-dev-all  - это инструмент для сборки расширений для нескольких версий PostgreSQL.
+```bash
+sudo apt-get install postgresql-server-dev-all
+sudo make USE_PGXS=1 install
+```
+Теперь все выполнилось успешно.
+
+
 
 
 
