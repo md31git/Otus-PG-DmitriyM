@@ -61,6 +61,19 @@ sudo nano /etc/freetds/freetds.conf
 
 
 
+При попытке сделать импорт схемы происходит ошибка
+![image](https://github.com/user-attachments/assets/942970c2-b043-4f79-86bf-f315e3fbeb5a)
+Посиле поисков было обнаружено что библиотека FreeTDS не утсноавлена. Ставим с помощью команды 
+```bash
+sudo apt install freetds-bin
+```
+И проверям что она есть
+![image](https://github.com/user-attachments/assets/fe41af82-7c3e-4be3-be72-ede9430fd703)
+
+
+
+
+
 
 
 
