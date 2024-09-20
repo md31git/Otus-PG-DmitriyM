@@ -56,19 +56,75 @@ sudo nano /etc/freetds/freetds.conf
 Т.к. у меня на локальной машине только один экземляр MS SQL SERVER то instance не указываем
 ![image](https://github.com/user-attachments/assets/0fc7631c-5915-4997-a36e-c1dd606a0234)
 
+## 6.Создаем необходиму структуру БД заранее
+```bash
+sudo -u postgres psql -d postgres -p 5432
+CREATE DATABASE project; -- создаем базу project, где владелец - pguser. Это делаем чтобы не тратить время на настройку прав (не тема этого проекта)
+\c project --переключаемся на БД project
+CREATE SCHEMA IF NOT EXISTS test; --создаем схему
+CREATE USER pguser PASSWORD 'qwerty'; - создаем пользователя через которого будет происходить подключение
+ALTER DATABASE project OWNER TO pguser;
+GRANT USAGE ON foreign server MSSQL to pguser; --даем права на работу с внешними таблицами
+GRANT all ON schema test to pguser;  -- даем полные парва на схему test
+```
 
-## 6.Устанавливаем расширение tds_fdw
 
-
-
-При попытке сделать импорт схемы происходит ошибка
+## 6.Устанавливаем расширение tds_fdw и настраиваем сервер
+```bash
+CREATE EXTENSION tds_fdw; --подключение расширения tds_fdw
+CREATE SERVER MSSQL FOREIGN DATA WRAPPER tds_fdw  OPTIONS (servername 'MSSQL2019', database 'PM', msg_handler 'notice'); --создание серверя с подключением к MS SQL Server, servername берем из настройки freetds.conf
+CREATE USER MAPPING FOR pguser SERVER MSSQL OPTIONS (username 'admin', password '12345'); -- Сопоставление пользователей pguser из PostgresSQL и adimn из MS SQL Server
+```
+Подключаем внешние таблицы из MS SQL Server таблицам. Наименование таблиц должны быть в кавычках, иначе они не подключаться но и ошибки не будет
+```bash
+SET ROLE pguser; --Переключемся на пользователя pguser
+IMPORT FOREIGN SCHEMA "dbo"
+LIMIT TO ("Change_type", "Owner_Object", "Operation_Kind", "Operation_type", "Employee", "Change_log", "Operation_log", "Exchange_log")
+FROM SERVER MSSQL
+INTO test;
+```
+При попытке сделать импорт схемы возникает ошибка
 ![image](https://github.com/user-attachments/assets/942970c2-b043-4f79-86bf-f315e3fbeb5a)
-Посиле поисков было обнаружено что библиотека FreeTDS не утсноавлена. Ставим с помощью команды 
+
+Проверяем что FreeTDS установлен и получаем ошибку 
+```bash
+tsql -C
+```
+![image](https://github.com/user-attachments/assets/4a7e0217-6c67-4090-80e2-67902950fab5)
+У нас нет утилиты для тестирования FreeTDS. Пришлось ставить ее из одельного пакета
 ```bash
 sudo apt install freetds-bin
 ```
-И проверям что она есть
-![image](https://github.com/user-attachments/assets/fe41af82-7c3e-4be3-be72-ede9430fd703)
+Проверяем, теперь утилита установлена и работает. Отображает данные по настройке FreeTDS
+```bash
+tsql -C
+```
+![image](https://github.com/user-attachments/assets/f5b7b0b2-6317-4b31-8d06-2675edef9005)
+
+Но при проверке соединения все равно возникает ошибка
+```bash
+tsql -S MSSQL2019
+```
+![image](https://github.com/user-attachments/assets/8181df14-f9f9-45fb-bcc4-9f8424364892)
+
+При поиске в интеренете пришло понимание что указание в настройках(/etc/freetds/freetds.conf) адрес MS SQL Server не верный. localhost - это служба FreeTDS будет искать внути WSL, а мне необходимо подключиться к локальной машине. 
+```bash
+ip route show | grep -i default | awk '{ print $3}'
+```
+![image](https://github.com/user-attachments/assets/dbcd27fd-a9dd-42f8-88d2-94be1cfbdc1e)
+
+И меняем host на верный в настройке FreeTDS
+```bash
+sudo nano /etc/freetds/freetds.conf
+```
+![image](https://github.com/user-attachments/assets/b8e7981b-8635-4413-88dd-46e66bcbd230)
+
+Проверяем что таблицы подключены.
+```bash
+sudo -u postgres psql -d project -p 5432
+select * from information_schema.foreign_tables;
+```
+![image](https://github.com/user-attachments/assets/2eaf0440-0d9e-49b6-a4ee-fff9e167d7da)
 
 
 
