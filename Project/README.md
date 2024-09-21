@@ -126,6 +126,55 @@ select * from information_schema.foreign_tables;
 ```
 ![image](https://github.com/user-attachments/assets/2eaf0440-0d9e-49b6-a4ee-fff9e167d7da)
 
+## 7.Перенос данных
+
+## 7.1 Переключаемся на пользователя миграции, создаем схему и переносим данные по справочникам (5 таблиц)
+```bash
+set role pguser;
+create schema if not exists dbo;
+create table if not exists dbo.Change_type as select * from test."Change_type";
+create table if not exists dbo.Owner_Object as select * from test."Owner_Object";
+create table if not exists dbo.Operation_Kind as select * from test."Operation_Kind";
+create table if not exists dbo.Operation_type as select * from test."Operation_type";
+create table if not exists dbo.Employee as select * from test."Employee";
+```
+![image](https://github.com/user-attachments/assets/ec6a8978-67f8-4cdd-b98c-639129e19a28)
+
+## 7.2 Переносим данные по большим таблицам (3 шт)
+Особенности:
+1. limit оператор не работает, все равно выбирается сначала все записи, а потом производиться ограничение.
+2. Для проверки использовано where
+3. Для обращения к внешним таблицам и полям нужно всегда писать в их кавычках
+
+При попытке выбрать данные из таблицы, где есть поле datetime2 (на стороне MS SQL SERVER), возникает ошибка. 
+```bash
+select *
+from test."Operation_log" where "Operation_log"."ID_Operation_log"<100
+```
+![image](https://github.com/user-attachments/assets/196929c4-f0ce-4a67-ab05-9c5dd093b236)
+
+Проблема именно в двоеточии вместо десятичной точки для типа datetime2. Для решения проблемы необходимо поменять тип данных на стороне PostgreSQL на текстовый, поменять двоеточние на точку и привести к типу timestamp.
+
+Меняем типы и проверяем.
+```bash
+alter foreign table test."Operation_log" alter column "Operation_Date" SET DATA type VarChar(100);
+alter foreign table test."Operation_log" alter column "Operation_End_Date" SET DATA type VarChar(100);
+select 
+       "ID_Operation_log",
+       regexp_replace("Operation_Date",'(:..:..):','\1.')::timestamp as "Operation_Date",
+       "ID_Operation_type",
+       "Status",
+       "ID_Employee",
+       "Error",
+       "Info",
+       "Task_link",
+       regexp_replace("Operation_End_Date",'(:..:..):','\1.')::timestamp as "Operation_End_Date", 
+       "Operation_Guid"
+from test."Operation_log" where "Operation_log"."ID_Operation_log"<100;
+```
+![image](https://github.com/user-attachments/assets/0c19a2e8-e79e-4d53-9373-cd0febdda62e)
+
+
 
 
 
