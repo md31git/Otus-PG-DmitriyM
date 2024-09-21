@@ -174,6 +174,34 @@ from test."Operation_log" where "Operation_log"."ID_Operation_log"<100;
 ```
 ![image](https://github.com/user-attachments/assets/0c19a2e8-e79e-4d53-9373-cd0febdda62e)
 
+Запускаем копирование данных таблицы test."Operation_log"
+```bash
+create table if not exists test.Operation_log as 
+select 
+       "ID_Operation_log",
+       regexp_replace("Operation_Date",'(:..:..):','\1.')::timestamp as "Operation_Date",
+       "ID_Operation_type",
+       "Status",
+       "ID_Employee",
+       "Error",
+       "Info",
+       "Task_link",
+       regexp_replace("Operation_End_Date",'(:..:..):','\1.')::timestamp as "Operation_End_Date", 
+       "Operation_Guid"
+from test."Operation_log";
+
+ALTER TABLE test.Operation_log SET SCHEMA dbo; -- меняем схему, т.к. нужна схема dbo а не text
+
+select * from dbo.Operation_log  limit 10; --проверяем что все перенеслось
+```
+![image](https://github.com/user-attachments/assets/d7da4cb0-2b52-4cbe-8b72-ef5908199b50)
+
+Запускаем копирование данных оставшихся двух таблиц test."Change_log" и test."Exchange_log"
+```bash
+create table if not exists dbo.Change_log as select * from test."Change_log";
+create table if not exists dbo.Exchange_log as select * from test."Exchange_log";
+```
+![image](https://github.com/user-attachments/assets/3cebb700-6639-4cde-8863-10046edaa5c4)
 
 
 
