@@ -202,6 +202,8 @@ create table if not exists dbo.Change_log as select * from test."Change_log";
 create table if not exists dbo.Exchange_log as select * from test."Exchange_log";
 ```
 ![image](https://github.com/user-attachments/assets/3cebb700-6639-4cde-8863-10046edaa5c4)
+![image](https://github.com/user-attachments/assets/04ca79b0-40ab-434a-8350-c64951699145)
+
 
 
 
