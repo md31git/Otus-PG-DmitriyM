@@ -30,6 +30,7 @@ sudo kill -9 39110
 sudo apt-get install freetds-dev freetds-common
 ```
 ![image](https://github.com/user-attachments/assets/3f7a0557-70c7-4cd1-84ff-1698df725674)
+
 Теперь все выполнилось успешно.
 
 ## 4.Загрузка и сборка расширения tds_fdw
