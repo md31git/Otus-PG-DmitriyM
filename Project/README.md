@@ -50,18 +50,20 @@ sudo make USE_PGXS=1 install
 ```
 Теперь все выполнилось успешно.
 
-## 5.Настраиваем подключение в базе MS SQL 2019
-Настраиваем подключение: астройка FreeTDS для подключения к MS SQL Server выполняется с помощью файла /etc/freetds/freetds.conf
+## 5.Настройка подключения в базе MS SQL 2019
+Настраиваем подключение: настройка FreeTDS для подключения к MS SQL Server выполняется с помощью файла /etc/freetds/freetds.conf
 ```bash
 sudo nano /etc/freetds/freetds.conf
 ```
 Вместо шаблонной настройки создаем свою
+
 ![image](https://github.com/user-attachments/assets/92eaea7b-aa46-4c5f-895c-e31d8dbb2457)
 
-Т.к. у меня на локальной машине только один экземляр MS SQL SERVER то instance не указываем
+Т.к. у меня на локальной машине только один экземпляр MS SQL SERVER то instance не указываем
+
 ![image](https://github.com/user-attachments/assets/0fc7631c-5915-4997-a36e-c1dd606a0234)
 
-## 6.Создаем необходиму структуру БД заранее
+## 6.Создание БД приемника PostgreSQL и ее структуры
 ```bash
 sudo -u postgres psql -d postgres -p 5432
 CREATE DATABASE project; -- создаем базу project, где владелец - pguser. Это делаем чтобы не тратить время на настройку прав (не тема этого проекта)
@@ -70,17 +72,16 @@ CREATE SCHEMA IF NOT EXISTS test; --создаем схему
 CREATE USER pguser PASSWORD 'qwerty'; - создаем пользователя через которого будет происходить подключение
 ALTER DATABASE project OWNER TO pguser;
 GRANT USAGE ON foreign server MSSQL to pguser; --даем права на работу с внешними таблицами
-GRANT all ON schema test to pguser;  -- даем полные парва на схему test
+GRANT all ON schema test to pguser;  -- даем полные права на схему test
 ```
-
-
-## 6.Устанавливаем расширение tds_fdw и настраиваем сервер
+## 7.Устанавливаем расширение tds_fdw и настраиваем внешний сервер MSSQL2019
 ```bash
 CREATE EXTENSION tds_fdw; --подключение расширения tds_fdw
-CREATE SERVER MSSQL FOREIGN DATA WRAPPER tds_fdw  OPTIONS (servername 'MSSQL2019', database 'PM', msg_handler 'notice'); --создание серверя с подключением к MS SQL Server, servername берем из настройки freetds.conf
+CREATE SERVER MSSQL FOREIGN DATA WRAPPER tds_fdw  OPTIONS (servername 'MSSQL2019', database 'PM', msg_handler 'notice'); --создание сервера с подключением к MS SQL Server, servername берем из настройки freetds.conf
 CREATE USER MAPPING FOR pguser SERVER MSSQL OPTIONS (username 'admin', password '12345'); -- Сопоставление пользователей pguser из PostgresSQL и adimn из MS SQL Server
 ```
 Подключаем внешние таблицы из MS SQL Server таблицам. Наименование таблиц должны быть в кавычках, иначе они не подключаться но и ошибки не будет
+
 ```bash
 SET ROLE pguser; --Переключемся на пользователя pguser
 IMPORT FOREIGN SCHEMA "dbo"
@@ -96,7 +97,8 @@ INTO test;
 tsql -C
 ```
 ![image](https://github.com/user-attachments/assets/4a7e0217-6c67-4090-80e2-67902950fab5)
-У нас нет утилиты для тестирования FreeTDS. Пришлось ставить ее из одельного пакета
+
+У нас нет утилиты для тестирования FreeTDS. Пришлось ставить ее из отдельного пакета
 ```bash
 sudo apt install freetds-bin
 ```
@@ -112,7 +114,7 @@ tsql -S MSSQL2019
 ```
 ![image](https://github.com/user-attachments/assets/8181df14-f9f9-45fb-bcc4-9f8424364892)
 
-При поиске в интеренете пришло понимание что указание в настройках(/etc/freetds/freetds.conf) адрес MS SQL Server не верный. localhost - это служба FreeTDS будет искать внути WSL, а мне необходимо подключиться к локальной машине. 
+После поиска ошибки в интернете пришло понимание, что указание в настройках (/etc/freetds/freetds.conf) адрес MS SQL Server не верный. localhost - это служба FreeTDS будет искать внути WSL, а мне необходимо подключиться к локальной машине. 
 ```bash
 ip route show | grep -i default | awk '{ print $3}'
 ```
@@ -131,9 +133,8 @@ select * from information_schema.foreign_tables;
 ```
 ![image](https://github.com/user-attachments/assets/2eaf0440-0d9e-49b6-a4ee-fff9e167d7da)
 
-## 7.Перенос данных
-
-## 7.1 Переключаемся на пользователя миграции, создаем схему и переносим данные по справочникам (5 таблиц)
+## 7.Перенос данных справочных таблиц
+Переключаемся на пользователя миграции, создаем схему и переносим данные по справочникам (5 таблиц)
 ```bash
 set role pguser;
 create schema if not exists dbo;
@@ -145,7 +146,7 @@ create table if not exists dbo.Employee as select * from test."Employee";
 ```
 ![image](https://github.com/user-attachments/assets/ec6a8978-67f8-4cdd-b98c-639129e19a28)
 
-## 7.2 Переносим данные по большим таблицам (3 шт)
+## 8 Переносим данных "больших" таблиц
 Особенности:
 1. limit оператор не работает, все равно выбирается сначала все записи, а потом производиться ограничение.
 2. Для проверки использовано where
@@ -158,7 +159,7 @@ from test."Operation_log" where "Operation_log"."ID_Operation_log"<100
 ```
 ![image](https://github.com/user-attachments/assets/196929c4-f0ce-4a67-ab05-9c5dd093b236)
 
-Проблема именно в двоеточии вместо десятичной точки для типа datetime2. Для решения проблемы необходимо поменять тип данных на стороне PostgreSQL на текстовый, поменять двоеточние на точку и привести к типу timestamp.
+Проблема именно в двоеточии вместо десятичной точки для типа datetime2. Для решения проблемы необходимо поменять тип данных на стороне PostgreSQL на текстовый, поменять двоеточие на точку и привести к типу timestamp.
 
 Меняем типы и проверяем.
 ```bash
@@ -209,12 +210,12 @@ create table if not exists dbo.Exchange_log as select * from test."Exchange_log"
 ![image](https://github.com/user-attachments/assets/3cebb700-6639-4cde-8863-10046edaa5c4)
 ![image](https://github.com/user-attachments/assets/04ca79b0-40ab-434a-8350-c64951699145)
 
-
-
-
-
-
-
+## 9 Подведение итогов
+1. В PostgreSQL были созданы таблицы на основе "внешних" таблиц из MS SQL.
+2. Перенесены данные как есть по всем 8 таблицам.
+3. Соответствие типов было предложено самими расширением tds_fdw
+4. Первичные, внешние ключи и индексы не переносились.
+5. Перенос больших таблиц занял от 0.5 до 5 часов в зависимости от объема.
 
 
 
