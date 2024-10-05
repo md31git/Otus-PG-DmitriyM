@@ -133,7 +133,7 @@ select * from information_schema.foreign_tables;
 ```
 ![image](https://github.com/user-attachments/assets/2eaf0440-0d9e-49b6-a4ee-fff9e167d7da)
 
-## 7.Перенос данных справочных таблиц
+## 8.Перенос данных справочных таблиц
 Переключаемся на пользователя миграции, создаем схему и переносим данные по справочникам (5 таблиц)
 ```bash
 set role pguser;
@@ -146,7 +146,7 @@ create table if not exists dbo.Employee as select * from test."Employee";
 ```
 ![image](https://github.com/user-attachments/assets/ec6a8978-67f8-4cdd-b98c-639129e19a28)
 
-## 8 Переносим данных "больших" таблиц
+## 9. Переносим данных "больших" таблиц
 Особенности:
 1. limit оператор не работает, все равно выбирается сначала все записи, а потом производиться ограничение.
 2. Для проверки использовано where
@@ -210,7 +210,7 @@ create table if not exists dbo.Exchange_log as select * from test."Exchange_log"
 ![image](https://github.com/user-attachments/assets/3cebb700-6639-4cde-8863-10046edaa5c4)
 ![image](https://github.com/user-attachments/assets/04ca79b0-40ab-434a-8350-c64951699145)
 
-## 9 Подведение итогов
+## 10. Подведение итогов
 1. В PostgreSQL были созданы таблицы на основе "внешних" таблиц из MS SQL.
 2. Перенесены данные как есть по всем 8 таблицам.
 3. Соответствие типов было предложено самими расширением tds_fdw
