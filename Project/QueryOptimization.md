@@ -65,8 +65,8 @@ order by ol."Operation_Date" desc;
 ![image](https://github.com/user-attachments/assets/ff3e6608-9af0-4ae3-9073-6d97ba9cd0cb)
 
 Вывод исходя из плана запроса:
-1. Не хватает индекса на поле  dbo.Operation_log."ID_Operation_log"
-2. Не хватает индекса на поле  dbo.Exchange_log."ID_Operation_log"
+1. Не хватает индекса на поле  dbo.Operation_log."ID_Operation_log". Наличие сканирование таблицы Seq Scan
+2. Не хватает индекса на поле  dbo.Exchange_log."ID_Operation_log". Наличие сканирование таблицы Seq Scan
 
 Вывод исходя из поддержания целлостности базы: 
 1. Необходимо на каждую таблицу создать первичный ключ, чтобы можно было однозначно идентифицировать каждую запись.
