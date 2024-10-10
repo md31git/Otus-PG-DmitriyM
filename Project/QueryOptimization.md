@@ -64,14 +64,42 @@ order by ol."Operation_Date" desc;
 
 ![image](https://github.com/user-attachments/assets/ff3e6608-9af0-4ae3-9073-6d97ba9cd0cb)
 
-Вывод 1 -  исходя из плана запроса:
+Использование таблиц в PostgreSQL без первичного ключа может привести к проблемам с целостностью данных и производительностью. Могут появиться дублирующие строки, а производительность поиска может значительно снизиться. Также с будут проблемы с репликацией: если на узел кластера приходит строка изменения без первичного ключа, то приходится делать полное сканирование таблицы и искать, в какой строке появились изменения. 
+**Вывод 1 - Общий рекомендаций:** 
+1. Необходимо на каждую таблицу создать первичный ключ, чтобы можно было однозначно идентифицировать каждую запись.
+2. На связанные таблицы создать внешний ключ на ранее созданные первичные ключи.
+   
+**Вывод 2 -  исходя из плана запроса:**
 1. Не хватает индекса на поле  dbo.Operation_log."ID_Operation_log". Наличие сканирование таблицы Seq Scan
 2. Не хватает индекса на поле  dbo.Exchange_log."ID_Operation_log". Наличие сканирование таблицы Seq Scan
 
-Использование таблиц в PostgreSQL без первичного ключа может привести к проблемам с целостностью данных и производительностью. Могут появиться дублирующие строки, а производительность поиска может значительно снизиться. Также с будут проблемы с репликацией: если на узел кластера приходит строка изменения без первичного ключа, то приходится делать полное сканирование таблицы и искать, в какой строке появились изменения. 
-Вывод 2 - Общий рекомендаций: 
-1. Необходимо на каждую таблицу создать первичный ключ, чтобы можно было однозначно идентифицировать каждую запись.
-2. На связанные таблицы создать внешний ключ на ранее созданные первичные ключи.
+### 2.1 Создание Primary key
+```Bash
+   ALTER TABLE dbo.Change_type ADD CONSTRAINT "PK_Change_type(ID_Change_type)" PRIMARY KEY ("ID_Change_type");
+   ALTER TABLE dbo.Employee ADD CONSTRAINT "PK_Employee(ID_Employee)" PRIMARY KEY ("ID_Employee");
+   ALTER TABLE dbo.Operation_kind ADD CONSTRAINT "PK_Operation_kind(ID_Operation_Kind)" PRIMARY KEY ("ID_Operation_Kind");
+   ALTER TABLE dbo.Operation_type ADD CONSTRAINT "PK_Operation_type(ID_Operation_type)" PRIMARY KEY ("ID_Operation_type");
+   ALTER TABLE dbo.Owner_object ADD CONSTRAINT "PK_Owner_object(ID_Owner_Object)" PRIMARY KEY ("ID_Owner_Object");
+
+   ALTER TABLE dbo.Operation_log ADD CONSTRAINT "PK_Operation_log(ID_Operation_log)" PRIMARY KEY ("ID_Operation_log");
+   ALTER TABLE dbo.Exchange_log ADD CONSTRAINT "PK_Exchange_log(ID_Exchange_log)" PRIMARY KEY ("ID_Exchange_log");
+   ALTER TABLE dbo.Change_log ADD CONSTRAINT "PK_Change_log(ID_Change_log)" PRIMARY KEY ("ID_Change_log");
+```
+
+После создания проверим на сколько увеличился объем данных по таблицам (прирост более 5Гб). Про таблицам справочникам прирост не существенный, т.к. сами таблицы содержать немного данных
+
+```bash
+SELECT C.relname AS "relation",
+       pg_size_pretty (pg_relation_size(C.oid)) as table,
+       pg_size_pretty (pg_table_size(C.oid) - pg_relation_size(C.oid)) as TOASTtable,
+       pg_size_pretty (pg_indexes_size(C.oid)) as "Index"
+FROM pg_class C
+WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
+```
+![image](https://github.com/user-attachments/assets/513141b5-334c-4c38-b42c-ebdda7898c58)
+
+### 2.2 Создание Внешних ключей и индексов на них.
+
 
 
 
