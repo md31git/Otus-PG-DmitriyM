@@ -99,9 +99,39 @@ WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
 ![image](https://github.com/user-attachments/assets/513141b5-334c-4c38-b42c-ebdda7898c58)
 
 ### 2.2 Создание Внешних ключей и индексов на них.
+```bash
+  create index "IX_Exchange_log(ID_Operation_log)" on dbo.Exchange_log ("ID_Operation_log"); 
+  create index "IX_Change_log(ID_Operation_log)" on dbo.Change_log ("ID_Operation_log");  
+  ALTER TABLE dbo.Exchange_log ADD CONSTRAINT "FK_Exchange_log(ID_Operation_log)" FOREIGN KEY ("ID_Operation_log") REFERENCES dbo.Operation_log("ID_Operation_log");
+  ALTER TABLE dbo.Change_log ADD CONSTRAINT "FK_Change_log(ID_Operation_log)" FOREIGN KEY ("ID_Operation_log") REFERENCES dbo.Operation_log("ID_Operation_log");
+```
+После создания запрос выполняется меньше чем за 1 сек.
+![image](https://github.com/user-attachments/assets/36e87715-af8a-4630-89ce-2c079d36aeed)
 
+### 2 Поиск 2 На guid
+```bash
+explain 
+select
+    ol."ID_Operation_log"   as "Id",
+    ol."Operation_Date"     as "Дата/время",
+    ol."Operation_End_Date" as "Дата/время завершения",
+    ot."Operation_type"     as "Операция",
+    K."Operation_Kind"      as "Тип операции",
+    E."FIO"                 as "ФИО",
+    ol."Info"               as "Примечание",
+    ol."Error"              as "Ошибка",
+    ol."Status"             as "Успех",
+    el."Input_xml"          as "Вх. запрос", 
+    el."Output_xml"         as "Исх. запрос"
+from dbo.Operation_log        ol
+inner join dbo.Employee        E on E."ID_Employee" = ol."ID_Employee"
+inner join dbo.Operation_type ot on ot."ID_Operation_type" = ol."ID_Operation_type"
+inner join dbo.Operation_Kind  K on K."ID_Operation_Kind" = ot."ID_Operation_Kind"
+ left join dbo.Exchange_log   el on el."ID_Operation_log" = ol."ID_Operation_log"
+where ol."Operation_Guid" = 'df356347-6462-4235-9631-d9aed0bf4a4a'
+order by ol."Operation_Date" desc;
+```
 
-### 2.3 На guid
 ![image](https://github.com/user-attachments/assets/82851f60-662a-44b1-837a-6eaf671a1702)
 
 
