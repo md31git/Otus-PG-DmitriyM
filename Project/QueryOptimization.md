@@ -101,6 +101,11 @@ WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
 ### 2.2 Создание Внешних ключей и индексов на них.
 
 
+### 2.3 На guid
+![image](https://github.com/user-attachments/assets/82851f60-662a-44b1-837a-6eaf671a1702)
+
+
+
 
 
 
