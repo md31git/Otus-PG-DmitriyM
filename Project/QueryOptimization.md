@@ -173,7 +173,51 @@ order by ol."Operation_Date" desc;
 1.Санчала мы получаем список ID_Operation_log во временную таблицу
 2.Потом по этому списку из временной таблицы получаем данные для пользователя. 
 
+### 4.1 Новый варинт выборки, разделенный на 2 запроса
+```bash
+create temporary table if not exists _Operation_log (id bigint primary key);
+explain 
+insert into _Operation_log (Id)
+select ol."ID_Operation_log"
+from dbo.Operation_log ol
+where ol."Operation_Date" >= '20220701' and ol."Operation_Date" <= '20220705'
+      and ol."ID_Operation_type"= 173
+      and exists(select 1 
+                 from dbo.Exchange_log el
+                 where el."ID_Operation_log" = ol."ID_Operation_log"
+                     and el."Input_xml" like '%1051783%'
+                 limit 1
+                );
+explain
+select
+    ol."ID_Operation_log"   as "Id",
+    ol."Operation_Date"     as "Дата/время",
+    ol."Operation_End_Date" as "Дата/время завершения",
+    ot."Operation_type"     as "Операция",
+    K."Operation_Kind"      as "Тип операции",
+    E."FIO"                 as "ФИО",
+    ol."Info"               as "Примечание",
+    ol."Error"              as "Ошибка",
+    ol."Status"             as "Успех",
+    el."Input_xml"          as "Вх. запрос", 
+    el."Output_xml"         as "Исх. запрос"
+from _Operation_log t
+inner join dbo.Operation_log  ol on ol."ID_Operation_log" = t."id"
+inner join dbo.Employee        E on E."ID_Employee" = ol."ID_Employee"
+inner join dbo.Operation_type ot on ot."ID_Operation_type" = ol."ID_Operation_type"
+inner join dbo.Operation_Kind  K on K."ID_Operation_Kind" = ot."ID_Operation_Kind"
+ left join dbo.Exchange_log   el on el."ID_Operation_log" = ol."ID_Operation_log"
+order by ol."Operation_Date" desc;
+```
+Теперь оптимизируем именно первую чаcть где фильтруются данные. 
 
+План следующий:
+1.На таблицу dbo.Operation_log сделать индекс на дату операции с включенными столбцами Тип операции и сам id операции. По сути сделаем покрывающий индекс, что должно существенно ускорить запрос. А также этим же индексом ускорим сортировку "order by ol."Operation_Date" desc". 
+2.На таблицу dbo.Exchange_log нужно создать индекс для полнотекстого поиска. 
+
+```bash
+
+```
 
 
 
