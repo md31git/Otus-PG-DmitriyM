@@ -108,7 +108,7 @@ WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
 После создания запрос выполняется меньше чем за 1 сек.
 ![image](https://github.com/user-attachments/assets/36e87715-af8a-4630-89ce-2c079d36aeed)
 
-### 2 Поиск 2 На guid
+### 3 Поиск 2
 ```bash
 explain 
 select
@@ -139,7 +139,40 @@ order by ol."Operation_Date" desc;
   create index "IX_Operation_log(Operation_Guid)" on dbo.Operation_log("Operation_Guid"); 
 ```
 После создания индекса запрос выполняется на порядки быстрее
-![image](https://github.com/user-attachments/assets/ef964ce6-fe59-4310-9c9e-c5e74c390047)
+![image](https://github.com/user-attachments/assets/3d935a72-d1bb-4abe-b892-c74362ff990e)
+
+### 4 Поиск 3
+```bash
+explain 
+select
+    ol."ID_Operation_log"   as "Id",
+    ol."Operation_Date"     as "Дата/время",
+    ol."Operation_End_Date" as "Дата/время завершения",
+    ot."Operation_type"     as "Операция",
+    K."Operation_Kind"      as "Тип операции",
+    E."FIO"                 as "ФИО",
+    ol."Info"               as "Примечание",
+    ol."Error"              as "Ошибка",
+    ol."Status"             as "Успех",
+    el."Input_xml"          as "Вх. запрос", 
+    el."Output_xml"         as "Исх. запрос"
+from dbo.Operation_log        ol
+inner join dbo.Employee        E on E."ID_Employee" = ol."ID_Employee"
+inner join dbo.Operation_type ot on ot."ID_Operation_type" = ol."ID_Operation_type"
+inner join dbo.Operation_Kind  K on K."ID_Operation_Kind" = ot."ID_Operation_Kind"
+ left join dbo.Exchange_log   el on el."ID_Operation_log" = ol."ID_Operation_log"
+where ol."Operation_Date" >= '20220701' and ol."Operation_Date" <= '20220705'
+      and ol."ID_Operation_type"= 173
+      and el."Input_xml" like '%1051783%'
+order by ol."Operation_Date" desc;
+```
+![image](https://github.com/user-attachments/assets/69439de7-1bdc-45d6-acb9-c94d54520674)
+Тут идет паралельное сканирование таблицы dbo.Operation_log  с фильтрацией по дате операции и его типу и поиск по индексу в таблице dbo.Exchange_log с фильтрацией по полю Input_xml (текст входящего запроса).
+
+Здесь появилась мысль о том чтобы ускоррить выполнение запроса необходимо разделить его на две части:
+1.Санчала мы получаем список ID_Operation_log во временную таблицу
+2.Потом по этому списку из временной таблицы получаем данные для пользователя. 
+
 
 
 
