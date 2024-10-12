@@ -134,7 +134,12 @@ order by ol."Operation_Date" desc;
 
 ![image](https://github.com/user-attachments/assets/82851f60-662a-44b1-837a-6eaf671a1702)
 
-
+Самая долгая операци это Seq Scan - полное сканирование таблицы, т.к. индекса на поле Operation_Guid нет. 
+```bash
+  create index "IX_Operation_log(Operation_Guid)" on dbo.Operation_log("Operation_Guid"); 
+```
+После создания индекса запрос выполняется на порядки быстрее
+![image](https://github.com/user-attachments/assets/ef964ce6-fe59-4310-9c9e-c5e74c390047)
 
 
 
