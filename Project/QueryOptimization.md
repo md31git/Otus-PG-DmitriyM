@@ -176,18 +176,19 @@ order by ol."Operation_Date" desc;
 ### 4.1 Новый варинт выборки, разделенный на 2 запроса
 ```bash
 create temporary table if not exists _Operation_log (id bigint primary key);
-explain 
+explain
 insert into _Operation_log (Id)
 select ol."ID_Operation_log"
 from dbo.Operation_log ol
-where ol."Operation_Date" >= '20220701' and ol."Operation_Date" <= '20220705'
-      and ol."ID_Operation_type"= 173
+where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
+      and ol."ID_Operation_type"= 41
       and exists(select 1 
                  from dbo.Exchange_log el
                  where el."ID_Operation_log" = ol."ID_Operation_log"
-                     and el."Input_xml" like '%1051783%'
+                     and el."Input_xml" like '%12605930%'
                  limit 1
                 );
+
 explain
 select
     ol."ID_Operation_log"   as "Id",
@@ -209,15 +210,68 @@ inner join dbo.Operation_Kind  K on K."ID_Operation_Kind" = ot."ID_Operation_Kin
  left join dbo.Exchange_log   el on el."ID_Operation_log" = ol."ID_Operation_log"
 order by ol."Operation_Date" desc;
 ```
+Даже разделение на две части запрос все еще очень долго выполняется (ожидание больше получаса и он не завершился).
 Теперь оптимизируем именно первую чаcть где фильтруются данные. 
 
 План следующий:
 1.На таблицу dbo.Operation_log сделать индекс на дату операции с включенными столбцами Тип операции и сам id операции. По сути сделаем покрывающий индекс, что должно существенно ускорить запрос. А также этим же индексом ускорим сортировку "order by ol."Operation_Date" desc". 
 2.На таблицу dbo.Exchange_log нужно создать индекс для полнотекстого поиска. 
+   а)поиск через приведение к tsvector без индекса
+   б)поиск через приведение к tsvector с индексом
+   в)создание отдельной таблиы для хранения данных в формате tsvector. Но этот вариант требует дополнительные накладыне расходы при добавления данных (триггер на заполнения новой таблице на основе данных "основной").
 
 ```bash
-
+  create index "IX_Operation_log(Operation_Date)" on dbo.Operation_log("Operation_Date") 
+  include ("ID_Operation_type", "ID_Operation_log"); 
 ```
+Проверяем насколько ускорился запрос. 
+```bash
+create temporary table if not exists _Operation_log (id bigint primary key);
+truncate _Operation_log;
+
+explain analyze
+insert into _Operation_log (Id)
+select ol."ID_Operation_log"
+from dbo.Operation_log ol
+where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
+      and ol."ID_Operation_type"= 41
+      and exists(select 1 
+                 from dbo.Exchange_log el
+                 where el."ID_Operation_log" = ol."ID_Operation_log"
+                     and el."Input_xml" like '%12605930%'
+                 limit 1
+                );
+
+explain analyze
+select
+    ol."ID_Operation_log"   as "Id",
+    ol."Operation_Date"     as "Дата/время",
+    ol."Operation_End_Date" as "Дата/время завершения",
+    ot."Operation_type"     as "Операция",
+    K."Operation_Kind"      as "Тип операции",
+    E."FIO"                 as "ФИО",
+    ol."Info"               as "Примечание",
+    ol."Error"              as "Ошибка",
+    ol."Status"             as "Успех",
+    el."Input_xml"          as "Вх. запрос", 
+    el."Output_xml"         as "Исх. запрос"
+from _Operation_log t
+inner join dbo.Operation_log  ol on ol."ID_Operation_log" = t."id"
+inner join dbo.Employee        E on E."ID_Employee" = ol."ID_Employee"
+inner join dbo.Operation_type ot on ot."ID_Operation_type" = ol."ID_Operation_type"
+inner join dbo.Operation_Kind  K on K."ID_Operation_Kind" = ot."ID_Operation_Kind"
+ left join dbo.Exchange_log   el on el."ID_Operation_log" = ol."ID_Operation_log"
+order by ol."Operation_Date" desc;
+```
+![image](https://github.com/user-attachments/assets/3e3f41e8-900f-4946-ae8c-be3eabdf4ca1)
+Даже добавления одного индекса ускорило выполнение запроса. Всего 5 сек, чтобы найти все идентификаторы операций (10 штук).
+![image](https://github.com/user-attachments/assets/da63cdc1-3a9b-46e2-9f73-81383027a698)
+Сам же запрос для пользователя выполнился за 0.2 сек. Это очень хороший результат. 
+Далее имеет смысл "ускорять" только первый запрос - заполнение временной таблицы.
+
+
+
+
 
 
 
