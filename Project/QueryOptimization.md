@@ -220,6 +220,7 @@ order by ol."Operation_Date" desc;
    б)поиск через приведение к tsvector с индексом
    в)создание отдельной таблиы для хранения данных в формате tsvector. Но этот вариант требует дополнительные накладыне расходы при добавления данных (триггер на заполнения новой таблице на основе данных "основной").
 
+### 4.1.1 Индекс на таблицу dbo.Operation_log
 ```bash
   create index "IX_Operation_log(Operation_Date)" on dbo.Operation_log("Operation_Date") 
   include ("ID_Operation_type", "ID_Operation_log"); 
@@ -267,7 +268,36 @@ order by ol."Operation_Date" desc;
 Даже добавления одного индекса ускорило выполнение запроса. Всего 5 сек, чтобы найти все идентификаторы операций (10 штук).
 ![image](https://github.com/user-attachments/assets/da63cdc1-3a9b-46e2-9f73-81383027a698)
 Сам же запрос для пользователя выполнился за 0.2 сек. Это очень хороший результат. 
+
 Далее имеет смысл "ускорять" только первый запрос - заполнение временной таблицы.
+
+### 4.1.2 Индекс на таблицу dbo.Exchange_log
+#### а)Поиск через приведение к tsvector без индекса
+#### б)поиск через приведение к tsvector с индексом
+#### в)Создание отдельной таблиы для хранения данных в формате tsvector.
+```bash
+create table dbo.exchange_log_Extended as
+select 
+"ID_Operation_log",
+to_tsvector(regexp_replace(el."Input_xml",'[<>/]',' ','g')) as "Input_ts",
+to_tsvector(regexp_replace(el."Output_xml",'[<>/]',' ','g')) as "Output_ts"
+from dbo.exchange_log el;
+
+create index "IX_exchange_log_Extended(ID_Operation_log)" on dbo.exchange_log_Extended("ID_Operation_log"); 
+```
+Получаем ошибку что длина сртроки превышает максимальную 
+![image](https://github.com/user-attachments/assets/43b2be23-e82e-4bc6-b6a4-2c64489e32b4)
+Необходимо изменить скрипт создания таблицы (см. https://stackoverflow.com/questions/30470151/postgresql-how-to-go-around-ts-vector-size-limitations)
+```bash
+create table dbo.exchange_log_Extended as
+select 
+"ID_Operation_log",
+to_tsvector(regexp_replace(el."Input_xml",'[<>/]',' ','g')) as "Input_ts",
+to_tsvector(regexp_replace(el."Output_xml",'[<>/]',' ','g')) as "Output_ts"
+from dbo.exchange_log el;
+
+create index "IX_exchange_log_Extended(ID_Operation_log)" on dbo.exchange_log_Extended("ID_Operation_log"); 
+```
 
 
 
