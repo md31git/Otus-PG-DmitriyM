@@ -11,7 +11,7 @@ WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
 ## 2 Анализ типов полей в таблицах
 ### 2.1 dbo.exchange_log 
 Тут смысловых полей всего два Input_xml, Output_xml. В них храняться входные и выходные запросы в формате xml, но тип данных text.
-![image](https://github.com/user-attachments/assets/fa70789a-2e1d-4f74-9b1e-7f372b4ef77e)
+![image](https://github.com/user-attachments/assets/b72ace71-6a65-41ff-860e-3712024ecf1b)
 
 По идее надо изменить тип данных на xml, но этого делать не будем, т.к. по этим полям необходим поиск строки в строке и для полнотекстого поиска нужно все равно преобразовывать в тип text, а индексов на тип xml в PostgreSQL нет.
 ### 2.2 dbo.change_log
