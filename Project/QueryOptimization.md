@@ -272,9 +272,28 @@ order by ol."Operation_Date" desc;
 Далее имеет смысл "ускорять" только первый запрос - заполнение временной таблицы.
 
 ### 4.1.2 Индекс на таблицу dbo.Exchange_log
+Поиск простой
+```bash
+explain
+select ol."ID_Operation_log"
+from dbo.Operation_log ol
+where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
+      and ol."ID_Operation_type"= 41
+      and exists(select 1 
+                 from dbo.Exchange_log el
+                 where el."ID_Operation_log" = ol."ID_Operation_log"
+                     and el."Input_xml" like '%12605930%'
+                 limit 1
+                );
+```
+![image](https://github.com/user-attachments/assets/e38642d8-1315-46e5-84c9-2535607c0719)
+
+
+
 #### а)Поиск через приведение к tsvector без индекса
 ```bash
 ```
+
 #### б)поиск через приведение к tsvector с индексом
 #### в)Создание отдельной таблицы для хранения данных в формате tsvector.
 ```bash
