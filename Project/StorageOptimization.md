@@ -19,6 +19,8 @@ WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
 ### 2.2 dbo.change_log
 ![image](https://github.com/user-attachments/assets/cba17ae6-d514-437a-bb32-01baa2326ef2)
 
+Что планируется сделать:
+
 1.Для полей справочников "ID_Owner_Object" и "ID_Change_Type" имеет смысл уменьшить размерность с Int до SmallInt. Это сократит в два раза занимаемый объем данных этим послем с 8 байт до 4 байт
 
 2.В PostgreSQL есть понятие "выравнивание" столбцов фиксированной длины до 8 байт. Поэтому необходимо придерживаться следующего правила положени столбцов в таблице:
@@ -74,17 +76,35 @@ alter table dbo.change_log_new rename to change_log;
 ```
 
 ### 2.3 dbo.operation_log
+![image](https://github.com/user-attachments/assets/22e328bb-7bc7-4dd7-aa69-3cf372c113c2)
+П.с. Тут размерность полей уже была изменена до создания скриншета
 
-1.Для полей справочников "ID_Owner_Object" и "ID_Change_Type" имеет смысл уменьшить размерность с Int до SmallInt. Это сократит в два раза занимаемый объем данных этим послем с 8 байт до 4 байт
+Что планируется сделать:
 
-2.В PostgreSQL есть понятие "выравнивание" столбцов фиксированной длины до 8 байт. Поэтому необходимо придерживаться следующего правила положени столбцов в таблице:
+1.Для полей справочников "ID_Employee" и "ID_Operation_Type" имеет смысл уменьшить размерность с Int до SmallInt. Это сократит в два раза занимаемый объем данных этим послем с 8 байт до 4 байт.
 
+2.Поле "Status" меняем на boolean (c 2 байт до 1 байта), поле "Operation_Guid" с varchar меняем на UUId (быстрее и компактнее, занимаем 16 байт) для оптимизации хранения.
 
+3.Изменение порядка полей для более оптимального хранения данных производить не будем, т.к. это потребует много времени выполняния (создание копии таблицы, пересоздания PK, FK и индексов (они уже созданы на текущий момент)) и считаю нецелесообразным. Тем более тут расположение полей почти оптимальное. Необходимо лишь поля "Error","Info","Task_link" перенести в конец таблицы. 
+
+Замерим размер таблицы до изменения 
+```Bash
+SELECT C.relname AS "relation",
+       pg_size_pretty (pg_relation_size(C.oid)) as table,
+       pg_size_pretty (pg_table_size(C.oid) - pg_relation_size(C.oid)) as TOASTtable,
+       pg_size_pretty (pg_indexes_size(C.oid)) as "Index"
+FROM pg_class C
+WHERE  C.relname IN ('operation_log');
+```
+Выполним изменение 
 ```Bash
 alter table dbo.operation_log 
      alter column "Status" type Boolean using "Status"::Int::boolean,
-     alter column "Operation_Guid" type UUID using "Operation_Guid"::UUID;
+     alter column "Operation_Guid" type UUID using "Operation_Guid"::UUID,
+     alter column "ID_Operation_type" type smallint using "ID_Operation_type"::smallint,
+     alter column "ID_Employee" type smallint using "ID_Employee"::smallint;
 ```
+После изменения типов полей:
 
 
 
