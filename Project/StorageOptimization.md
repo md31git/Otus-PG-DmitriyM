@@ -1,15 +1,5 @@
-## 1 Получаем размеры таблиц 
-```bash
-SELECT C.relname AS "relation",
-       pg_size_pretty (pg_relation_size(C.oid)) as table,
-       pg_size_pretty (pg_table_size(C.oid) - pg_relation_size(C.oid)) as TOASTtable
-FROM pg_class C
-WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
-```
-![image](https://github.com/user-attachments/assets/024dc2ac-6cd2-4c7b-8204-7e5d6c64d0ae)
-
-## 2 Анализ типов полей в таблицах
-### 2.1 dbo.exchange_log 
+## 1 Анализ типов полей в таблицах
+### 1.1 dbo.exchange_log 
 ![image](https://github.com/user-attachments/assets/b72ace71-6a65-41ff-860e-3712024ecf1b)
 
 Тут смысловых полей всего два Input_xml, Output_xml. В них хранятся входные и выходные запросы в формате xml, но тип данных text.
@@ -17,7 +7,7 @@ WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
 По идее надо изменить тип данных на xml, но этого делать не будем, т.к. по этим полям необходим поиск строки в строке и для полнотекстового поиска нужно все равно преобразовывать в тип text, а индексов на тип xml в PostgreSQL нет.
 
 **Итого: ничего не меняем**
-### 2.2 dbo.change_log
+### 1.2 dbo.change_log
 ![image](https://github.com/user-attachments/assets/cba17ae6-d514-437a-bb32-01baa2326ef2)
 
 Что планируется сделать:
@@ -85,7 +75,7 @@ drop table dbo.change_log_new_2;
 
 ![image](https://github.com/user-attachments/assets/baee2fb7-4fba-41b7-b3be-1a9b0452635b)
 
-### 2.3 dbo.operation_log
+### 1.3 dbo.operation_log
 ![image](https://github.com/user-attachments/assets/c8819aab-1613-46c4-a7ce-6f51fbd435d0)
 
 Что планируется сделать:
