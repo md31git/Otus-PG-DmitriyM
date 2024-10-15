@@ -82,6 +82,8 @@ drop table dbo.change_log_new_2;
 ```
 **Итог: изменили тип у двух полей и поменяли порядок полей, что уменьшило размер таблицы на 5%**
 
+![image](https://github.com/user-attachments/assets/baee2fb7-4fba-41b7-b3be-1a9b0452635b)
+
 ### 2.3 dbo.operation_log
 !!!Поменять!!!
 ![image](https://github.com/user-attachments/assets/22e328bb-7bc7-4dd7-aa69-3cf372c113c2)
