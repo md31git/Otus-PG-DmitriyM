@@ -115,7 +115,14 @@ alter table dbo.operation_log
      alter column "ID_Employee" type smallint using "ID_Employee"::smallint;
 ```
 После изменения типов полей:
+??????
 
+Также необходимо изменить тип поля в самих справочниках:
+```Bash
+   ALTER TABLE dbo.Employee alter column "ID_Employee" type Smallint using "ID_Employee"::smallint;
+   ALTER TABLE dbo.Operation_kind alter column "ID_Operation_kind" type Smallint using "ID_Operation_kind"::smallint;
+   ALTER TABLE dbo.Operation_type alter column "ID_Operation_type" type Smallint using "ID_Operation_type"::smallint;
+```
 **Итог: изменили тип у 4 полей, что уменьшило размер таблицы на 5%**
 
 
