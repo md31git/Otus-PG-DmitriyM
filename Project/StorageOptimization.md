@@ -120,7 +120,9 @@ alter table dbo.operation_log
      alter column "ID_Employee" type smallint using "ID_Employee"::smallint;
 ```
 После изменения типов полей:
+
 ![image](https://github.com/user-attachments/assets/24a3e626-0233-41b6-b3c0-62b4f89e8346)
+
 Размер индексов уменьшился на 30%, а данных на 35%. Что составило более 7Гб.
 
 Также необходимо изменить тип поля в самих справочниках:
