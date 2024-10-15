@@ -86,9 +86,7 @@ drop table dbo.change_log_new_2;
 ![image](https://github.com/user-attachments/assets/baee2fb7-4fba-41b7-b3be-1a9b0452635b)
 
 ### 2.3 dbo.operation_log
-!!!Поменять!!!
-![image](https://github.com/user-attachments/assets/22e328bb-7bc7-4dd7-aa69-3cf372c113c2)
-П.с. Тут размерность полей уже была изменена до создания скриншета
+![image](https://github.com/user-attachments/assets/c8819aab-1613-46c4-a7ce-6f51fbd435d0)
 
 Что планируется сделать:
 
@@ -96,17 +94,33 @@ drop table dbo.change_log_new_2;
 
 2.Поле "Status" меняем на boolean (c 2 байт до 1 байта), поле "Operation_Guid" с varchar меняем на UUId (быстрее и компактнее, занимаем 16 байт) для оптимизации хранения.
 
-3.Изменение порядка полей для более оптимального хранения данных производить не будем, т.к. это потребует много времени выполнения (создание копии таблицы, пересоздания PK, FK и индексов (они уже созданы на текущий момент)) и считаю нецелесообразным. Тем более тут расположение полей почти оптимальное. Необходимо лишь поля "Error","Info","Task_link" перенести в конец таблицы. 
+3.Изменение порядка полей для более оптимального хранения данных производить не будем, т.к. это потребует много времени выполнения (создание копии таблицы, пересоздания PK, FK и индексов (они уже созданы на текущий момент)) и считаю нецелесообразным. Тем более тут расположение полей почти оптимальное. Необходимо лишь поля "Error","Info","Task_link" перенести в конец таблицы. Посмотрим положение полей и размерность:
+```Bash
+SELECT a.attname, t.typname, t.typalign, t.typlen
+  FROM pg_class c
+  JOIN pg_attribute a ON (a.attrelid = c.oid)
+  JOIN pg_type t ON (t.oid = a.atttypid)
+WHERE c.relname = 'operation_log'
+   AND a.attnum >= 0
+ ORDER BY a.attnum;
+```
+![image](https://github.com/user-attachments/assets/971042b8-e6f9-4a0d-8e73-3dac1b1a756f)
+
+Тут видно следующее: после изменения размеров полей, три поля ID_Operation_type, Status, ID_Employee вместе будут занимать 5 байт, чтобы будет помещаться в 8 байт и будет оптимально, т.к. больше нет других полей мнеьше 8 байт.  
 
 Замерим размер таблицы до изменения 
 ```Bash
 SELECT C.relname AS "relation",
+       pg_relation_size(C.oid) as table_bytes,
        pg_size_pretty (pg_relation_size(C.oid)) as table,
        pg_size_pretty (pg_table_size(C.oid) - pg_relation_size(C.oid)) as TOASTtable,
+       pg_indexes_size(C.oid) as "Index_bytes",
        pg_size_pretty (pg_indexes_size(C.oid)) as "Index"
 FROM pg_class C
 WHERE  C.relname IN ('operation_log');
 ```
+![image](https://github.com/user-attachments/assets/1738f8cd-c5aa-477d-aa83-152cfe508966)
+
 Выполним изменение 
 ```Bash
 alter table dbo.operation_log 
