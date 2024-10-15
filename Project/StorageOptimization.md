@@ -130,7 +130,8 @@ alter table dbo.operation_log
      alter column "ID_Employee" type smallint using "ID_Employee"::smallint;
 ```
 После изменения типов полей:
-??????
+![image](https://github.com/user-attachments/assets/24a3e626-0233-41b6-b3c0-62b4f89e8346)
+Размер индексов уменьшился на 30%, а данных на 35%. Что составило более 7Гб.
 
 Также необходимо изменить тип поля в самих справочниках:
 ```Bash
@@ -138,7 +139,7 @@ alter table dbo.operation_log
    ALTER TABLE dbo.Operation_kind alter column "ID_Operation_kind" type Smallint using "ID_Operation_kind"::smallint;
    ALTER TABLE dbo.Operation_type alter column "ID_Operation_type" type Smallint using "ID_Operation_type"::smallint;
 ```
-**Итог: изменили тип у 4 полей, что уменьшило размер таблицы на 5%**
+**Итог: изменили тип у 4 полей, что уменьшило размер таблицы более чем на 30%**
 
 
 
