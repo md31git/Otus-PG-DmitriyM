@@ -141,6 +141,10 @@ alter table dbo.operation_log
 ```
 **Итог: изменили тип у 4 полей, что уменьшило размер таблицы более чем на 30%**
 
+![image](https://github.com/user-attachments/assets/4258d943-ff96-4a41-97e0-3594633c037c)
+
+
+
 
 
 
