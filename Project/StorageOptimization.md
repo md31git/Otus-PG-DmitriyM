@@ -18,7 +18,9 @@ WHERE  C.relname IN ('exchange_log', 'operation_log','change_log');
 **Итого: ничего не меняем **
 ### 2.2 dbo.change_log
 ![image](https://github.com/user-attachments/assets/cba17ae6-d514-437a-bb32-01baa2326ef2)
+
 1.Для полей справочников "ID_Owner_Object" и "ID_Change_Type" имеет смысл уменьшить размерность с Int до SmallInt. Это сократит в два раза занимаемый объем данных этим послем с 8 байт до 4 байт
+
 2.В PostgreSQL есть понятие "выравнивание" столбцов фиксированной длины до 8 байт. Поэтому необходимо придерживаться следующего правила положени столбцов в таблице:
 
 **Сначала идут широкие столбцы, затем средние, маленькие столбцы в последнюю очередь, а столбцы переменного размера, такие как NUMERIC и TEXT, в самом конце**
@@ -72,6 +74,12 @@ alter table dbo.change_log_new rename to change_log;
 ```
 
 ### 2.3 dbo.operation_log
+
+1.Для полей справочников "ID_Owner_Object" и "ID_Change_Type" имеет смысл уменьшить размерность с Int до SmallInt. Это сократит в два раза занимаемый объем данных этим послем с 8 байт до 4 байт
+
+2.В PostgreSQL есть понятие "выравнивание" столбцов фиксированной длины до 8 байт. Поэтому необходимо придерживаться следующего правила положени столбцов в таблице:
+
+
 ```Bash
 alter table dbo.operation_log 
      alter column "Status" type Boolean using "Status"::Int::boolean,
@@ -79,12 +87,6 @@ alter table dbo.operation_log
 ```
 
 
-## 3 Оптимизируем toast данные
-```bash
-ALTER TABLE dbo.exchange_log 
-      ALTER COLUMN "Input_xml" SET STORAGE MAIN,
-      ALTER COLUMN "Output_xml" SET STORAGE MAIN;
-```
 
 
 
