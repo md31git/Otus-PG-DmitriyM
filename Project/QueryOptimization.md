@@ -272,9 +272,12 @@ order by ol."Operation_Date" desc;
 Далее имеет смысл "ускорять" только первый запрос - заполнение временной таблицы.
 
 ### 4.1.2 Индекс на таблицу dbo.Exchange_log
-Поиск простой
+
+Для упрашения тестирования используем только select из первого запроса.
+
+#### а) Поиск простой через like без индекса
 ```bash
-explain
+explain analyze
 select ol."ID_Operation_log"
 from dbo.Operation_log ol
 where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
@@ -286,15 +289,28 @@ where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
                  limit 1
                 );
 ```
-![image](https://github.com/user-attachments/assets/e38642d8-1315-46e5-84c9-2535607c0719)
+![image](https://github.com/user-attachments/assets/b8606bee-7ef5-4241-9229-90050a74e07d)
 
+**Результат: 5 сек** 
 
-
-#### а)Поиск через приведение к tsvector без индекса
+#### б)Поиск через приведение к tsvector без индекса
 ```bash
+explain analyze
+select ol."ID_Operation_log"
+from dbo.Operation_log ol
+where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
+      and ol."ID_Operation_type"= 41
+      and exists(select 1 
+                 from dbo.Exchange_log el
+                 where el."ID_Operation_log" = ol."ID_Operation_log"
+                     and to_tsvector(el."Input_xml") @@ to_tsquery('12605930:*')
+                 limit 1
+                );               
 ```
+![image](https://github.com/user-attachments/assets/b8e9563e-17bb-4dd0-9aac-a1674c75262c)
 
-#### б)поиск через приведение к tsvector с индексом
+**Результат: 7 сек** 
+
 #### в)Создание отдельной таблицы для хранения данных в формате tsvector.
 ```bash
 create table dbo.exchange_log_Extended as
@@ -321,12 +337,21 @@ create index "IX_exchange_log_Extended(ID_Operation_log)" on dbo.exchange_log_Ex
 ```
 И все равно получаю ошибку.
 ![image](https://github.com/user-attachments/assets/920112d7-1b03-4d3d-8147-05f16278a7e4)
+
+**Результат:**
 Я отказался от создание отдельной таблицы по следующим причинам:
 1. В итоге будут неполные данные для поиска (обрезаем текст до 1 Гб)
 2. Будет вторая таблица практически равная по размеру самой большой таблицы.
 3. Необходимо отдельная поддержка наполнения новвой таблицы данныыми через триггер и как следствие накладные расходы.
 
-
+#### г)Создание индекса GIST на поле "Input_Xml" для полно текстого поиска
+Для этого устанавливаем расширение pg_trgm
+```bash
+create extension pg_trgm;
+create index "IX_gist_Exchange_log(Input_xml)" on dbo.Exchange_log 
+using gist ("Input_xml" gist_trgm_ops);
+```
+![image](https://github.com/user-attachments/assets/a7ecc56a-e637-41b5-8fdd-6ce6aa83eb87)
 
 ------
 ![image](https://github.com/user-attachments/assets/7a6b5d54-212c-4c9d-8af9-1bca9c2da82e)
