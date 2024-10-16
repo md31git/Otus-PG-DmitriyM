@@ -271,6 +271,19 @@ order by ol."Operation_Date" desc;
 
 Далее имеет смысл "ускорять" только первый запрос - заполнение временной таблицы.
 
+#### Дополнение 
+После изменения размерности полей в таблице, индекс "IX_Operation_log(Operation_Date)" перестает использоваться планировщиком. Почему - непонятно. 
+
+Vacuum Full и обновление статистики по таблице результата не дало. Все равно планировщик решает использоватье Seq Scan, хотя запрос не менялся. 
+![image](https://github.com/user-attachments/assets/c3271077-1918-4127-b716-106186d52f05)
+
+Только создание индекса где поле "ID_Operation_type" перенесено в сам индекс из Include вернуло операцию Index only scan (сканировение только индекса без обращение к данным)
+```bash
+  create index "IX_Operation_log(Operation_Date,ID_Operation_type)" on dbo.Operation_log("Operation_Date","ID_Operation_type") 
+  include ("ID_Operation_log"); 
+```
+![image](https://github.com/user-attachments/assets/9d10b891-2f97-4639-be6e-969b0db8583f)
+
 ### 4.1.2 Индекс на таблицу dbo.Exchange_log
 
 Для упрашения тестирования используем только select из первого запроса.
@@ -392,19 +405,6 @@ WHERE indexrelid = 'dbo."IX_gin_Exchange_log(Input_xml)"'::regclass;
 ```
 
 **Результат: Индекс получилось создать, но использовать нельзя. Скорее всего по причине превышение размера.**
-
-
-------
-После изменения типа полей без пересоздания индекса - строит seq scan
-explain
-select ol."ID_Operation_log"
-from dbo.Operation_log ol
-where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
-      and ol."ID_Operation_type"= 41
-![image](https://github.com/user-attachments/assets/c3271077-1918-4127-b716-106186d52f05)
-
-
-
 
 
 
