@@ -328,11 +328,11 @@ create index "IX_exchange_log_Extended(ID_Operation_log)" on dbo.exchange_log_Ex
 
 
 
-
+------
 ![image](https://github.com/user-attachments/assets/7a6b5d54-212c-4c9d-8af9-1bca9c2da82e)
 ![image](https://github.com/user-attachments/assets/21e18e2c-17cf-4e1f-8aca-6b05c144a1e3)
 
-
+------
 После изменения типа полей без пересоздания индекса - строит seq scan
 explain
 select ol."ID_Operation_log"
@@ -340,6 +340,23 @@ from dbo.Operation_log ol
 where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
       and ol."ID_Operation_type"= 41
 ![image](https://github.com/user-attachments/assets/c3271077-1918-4127-b716-106186d52f05)
+
+
+--------
+explain
+select ol."ID_Operation_log"
+from dbo.Operation_log ol
+where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
+      and ol."ID_Operation_type"= 41
+      and exists(select 1 
+                 from dbo.Exchange_log el
+                 where el."ID_Operation_log" = ol."ID_Operation_log"
+                     and el."Input_xml" like '%12605930%'
+                 limit 1
+                );
+
+![image](https://github.com/user-attachments/assets/3506558a-cf57-4ea2-9dd3-36ad1a04e599)
+
 
 
 
