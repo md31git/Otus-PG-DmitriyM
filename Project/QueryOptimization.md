@@ -353,6 +353,40 @@ using gist ("Input_xml" gist_trgm_ops);
 ```
 ![image](https://github.com/user-attachments/assets/a7ecc56a-e637-41b5-8fdd-6ce6aa83eb87)
 
+**Результат: ошибка - первышен максимальный размер строки индекса**
+
+#### д)Создание индекса GIN на поле "Input_Xml" для полно текстого поиска
+```bash
+create index "IX_gin_Exchange_log(Input_xml)" on dbo.Exchange_log 
+using gin ("Input_xml" gin_trgm_ops);
+```
+![image](https://github.com/user-attachments/assets/0c52df2f-37ad-446e-a8b7-a1dcd2787a2c)
+
+Индекс создан успешно, но при проверке запроса выходит ошибка в данных.
+```bash
+explain analyze
+select ol."ID_Operation_log"
+from dbo.Operation_log ol
+where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
+      and ol."ID_Operation_type"= 41
+      and exists(select 1 
+                 from dbo.Exchange_log el
+                 where el."ID_Operation_log" = ol."ID_Operation_log"
+                     and el."Input_xml" like '%12605930%'
+                 limit 1
+                );
+```
+![image](https://github.com/user-attachments/assets/97c5bcab-f9a3-401a-a8ba-e67d24a070e7)
+
+Если отключаешь созданный индекс "IX_gin_Exchange_log(Input_xml) при помощи команды ниже, то ошибки не возникает.
+```bash
+update pg_index
+SET indisvalid = False
+WHERE indexrelid = 'dbo."IX_gin_Exchange_log(Input_xml)"'::regclass;
+```
+
+**Результат: **
+
 ------
 ![image](https://github.com/user-attachments/assets/7a6b5d54-212c-4c9d-8af9-1bca9c2da82e)
 ![image](https://github.com/user-attachments/assets/21e18e2c-17cf-4e1f-8aca-6b05c144a1e3)
