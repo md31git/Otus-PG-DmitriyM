@@ -378,6 +378,12 @@ where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
 ```
 ![image](https://github.com/user-attachments/assets/97c5bcab-f9a3-401a-a8ba-e67d24a070e7)
 
+По id объека определяем где ошибка и находим что это наш индекс Gin "IX_gin_Exchange_log(Input_xml)"
+```bash
+select pg_filenode_relation(0,1032906);
+```
+![image](https://github.com/user-attachments/assets/869bad41-476b-45af-90bd-483befd6de27)
+
 Если отключаешь созданный индекс "IX_gin_Exchange_log(Input_xml) при помощи команды ниже, то ошибки не возникает.
 ```bash
 update pg_index
@@ -385,11 +391,8 @@ SET indisvalid = False
 WHERE indexrelid = 'dbo."IX_gin_Exchange_log(Input_xml)"'::regclass;
 ```
 
-**Результат: **
+**Результат: Индекс получилось создать, но использовать нельзя. Скорее всего по причине превышение размера.**
 
-------
-![image](https://github.com/user-attachments/assets/7a6b5d54-212c-4c9d-8af9-1bca9c2da82e)
-![image](https://github.com/user-attachments/assets/21e18e2c-17cf-4e1f-8aca-6b05c144a1e3)
 
 ------
 После изменения типа полей без пересоздания индекса - строит seq scan
@@ -400,21 +403,6 @@ where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
       and ol."ID_Operation_type"= 41
 ![image](https://github.com/user-attachments/assets/c3271077-1918-4127-b716-106186d52f05)
 
-
---------
-explain
-select ol."ID_Operation_log"
-from dbo.Operation_log ol
-where ol."Operation_Date" >= '20200801' and ol."Operation_Date" <= '20200831'
-      and ol."ID_Operation_type"= 41
-      and exists(select 1 
-                 from dbo.Exchange_log el
-                 where el."ID_Operation_log" = ol."ID_Operation_log"
-                     and el."Input_xml" like '%12605930%'
-                 limit 1
-                );
-
-![image](https://github.com/user-attachments/assets/3506558a-cf57-4ea2-9dd3-36ad1a04e599)
 
 
 
