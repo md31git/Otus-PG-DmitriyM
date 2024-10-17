@@ -33,9 +33,7 @@ limit 10000;
 #### Поиск 4. 
 * Вид объекта (Сhange_log.ID_Owner_Object)
 * Идентификатор объекта  (Сhange_log.Id)
-#### Поиск 5. 
-* Дата операции в диапазоне дат (Operation_log.Operation_Date). 90% запросов за последние 2 месяца, остальные 10% за другие периоды.
-* Пользователь, совершивший операцию (Employee.ID_Employee) 
+
 
 ## 2 Поиск 1.
 ```Bash
@@ -403,10 +401,27 @@ update pg_index
 SET indisvalid = False
 WHERE indexrelid = 'dbo."IX_gin_Exchange_log(Input_xml)"'::regclass;
 ```
+ В итоге (если бы индекс работал) план запроса бы выглядел так:
+ 
+![image](https://github.com/user-attachments/assets/fc5a94bd-f2ce-4485-9f3b-7a20827516c7)
 
 **Результат: Индекс получилось создать, но использовать нельзя. Скорее всего по причине превышение размера.**
 
+### 5 Поиск 4
+Тут необходим поиск по Вид объекта (Сhange_log.ID_Owner_Object) и Идентификатор объекта (Сhange_log.Id). Это поля находяться в одной таблице dbo.Сhange_log
+```bash
+explain analyze
+select ol."ID_Operation_log"
+from dbo.Operation_log ol
+where  exists(select 1 
+              from dbo.change_log cl
+              where cl."ID_Operation_log" = ol."ID_Operation_log"
+                   and cl."ID_Owner_Object"  = 32
+                   and cl."ID"  = 4445327
+              limit 1
+                );
+```
+![image](https://github.com/user-attachments/assets/763c9519-0f85-457c-82d0-dae84844b36e)
 
-
-
+**Результат: 0.625 сек до создания индекса. Т.к. таблица dbo.Сhange_log не очень большая по сравнению с другими, то и без индексов работает достаточно быстро.**
 
