@@ -217,6 +217,24 @@ create table if not exists dbo.Exchange_log as select * from test."Exchange_log"
 4. Первичные, внешние ключи и индексы не переносились.
 5. Перенос больших таблиц занял от 0.5 до 5 часов в зависимости от объема.
 
+Использованные материалы:
+
+https://winitpro.ru/index.php/2022/01/10/wsl-perenos/
+
+https://wiki.postgresql.org/wiki/Foreign_data_wrappers
+
+https://github.com/tds-fdw/tds_fdw
+
+https://www.pvsm.ru/postgresql/200099?ysclid=m15hhupuj8902504740
+
+https://habr.com/ru/companies/postgrespro/articles/309490/
+
+https://postgrespro.ru/docs/postgresql/14/sql-importforeignschema
+
+https://postgrespro.ru/docs/postgresql/14/infoschema-foreign-tables
+   
+https://habr.com/ru/articles/774486
+
 
 
 
