@@ -143,10 +143,42 @@ $$ LANGUAGE plpgsql;
 
 ### 2.2 Создаем три отдельных триггера AFTER на INSERT, UPDATE, DELETE.
 Делаем AFTER, т.к. по сути измение данных первично, а обновление таблицы-отчета вторично. И для триггера  UPDATE нужно чтобы в триггерной таблице NEW были уже изменные значения
+```bash
+create trigger sales_I_trigger
+after insert
+on sales
+REFERENCING NEW TABLE AS inserted
+for each statement 
+execute function good_sum_mart_insert();
 
+create trigger sales_U_trigger
+after update
+on sales
+REFERENCING NEW TABLE AS inserted OLD TABLE AS deleted
+for each statement 
+execute function good_sum_mart_update();
 
+create trigger sales_D_trigger
+after delete
+on sales
+REFERENCING OLD TABLE AS deleted
+for each statement 
+execute function good_sum_mart_delete();
+```
+### 2.3 Создаем уснивальный индексна таблицу good_sum_mart
+Причины:
+1. Т.к. в триггерных функциях используем вырожение ON CONFLICT и он требует уникальности 
+2. Триггерной функции на удаление есть условие where V.good_name = GS.good_name - для ускорения выполнения.
+```bash
+create unique index  "IQ_good_sum_mart(good_name)" on good_sum_mart (good_name);
+```
 
+## 3 Проверка работы
+### 3.1 Добавление
 
+### 3.2 Изменение
+
+### 3.3 Удаление 
 
 
 
