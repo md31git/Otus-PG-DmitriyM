@@ -448,4 +448,11 @@ where  exists(select 1
 ![image](https://github.com/user-attachments/assets/84426da1-764e-4dd2-86e2-ab60832b2078)
 **Результат: 0.115 милисек с индексом. Практически моментально. Ну и не стоит забывать про запрос самой выборки данных на основе полученных идентификаторов id.**
 
+Использованные материалы:
+https://dba.stackexchange.com/questions/129413/full-text-search-in-xml-documents?newreg=f509224b72f3470a865ed18db92f2c4b
+https://habr.com/ru/articles/442170/
+https://stackoverflow.com/questions/30470151/postgresql-how-to-go-around-ts-vector-size-limitations
+https://pganalyze.com/blog/5mins-postgres-forcing-join-order
+https://eax.me/postgresql-full-text-search/
+https://stackoverflow.com/questions/1566717/postgresql-like-query-performance-variations
 
