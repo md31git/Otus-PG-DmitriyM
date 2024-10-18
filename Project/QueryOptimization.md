@@ -406,7 +406,16 @@ update pg_index
 SET indisvalid = False
 WHERE indexrelid = 'dbo."IX_gin_Exchange_log(Input_xml)"'::regclass;
 ```
- В итоге (если бы индекс работал) план запроса бы выглядел так:
+
+Попытка "исправить" поврежденные страницы и пересоздать индекс не увенчалась успехом. Ошибка никуда не ушла. 
+```bash
+SET zero_damaged_pages = on;
+vacuum full dbo.exchange_log;
+SET zero_damaged_pages = off;
+reindex INDEX dbo."IX_gin_Exchange_log(Input_xml)";
+```
+
+В итоге (если бы индекс работал) план запроса бы выглядел так:
  
 ![image](https://github.com/user-attachments/assets/fc5a94bd-f2ce-4485-9f3b-7a20827516c7)
 
