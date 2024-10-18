@@ -136,6 +136,7 @@ alter table dbo.operation_log
 ![image](https://github.com/user-attachments/assets/4258d943-ff96-4a41-97e0-3594633c037c)
 
 Использованные материалы:
+
 https://habr.com/ru/articles/756074/ 
 
 
