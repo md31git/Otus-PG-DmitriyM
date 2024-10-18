@@ -50,6 +50,107 @@ CREATE TABLE good_sum_mart
 );
 ```
 ## 2.Задача: Создать триггер (на таблице sales) для поддержки.
+Рассуждение:
+1. Триггер на каждую отельную строку делать не будем, т.к. нам при любом обновлении кол-ва строк таблицы sales нужно один раз обновить таблицу-отчет.
+2. Полное удаление таблицы и перестроение заново тоже делать не будем, т.к. это по сути перестроение всего отчета при каждом обновлении, а исходя из задачи сам отчет тормозит.
+3. Будем обновлять только строки в таблице только по тем товарам, у которых изменились продажи.
+
+### 2.1 Создаем три отдельные триггерные функции для каждой операции INSERT, UPDATE, DELETE.
+Делаем отдельные функции для уменьшения кода и использования REFERENCING (хотелось проверить работу).
+
+Функция на вставку
+```bash
+CREATE OR REPLACE FUNCTION good_sum_mart_insert() 
+RETURNS TRIGGER AS $$
+BEGIN   
+   
+    insert into good_sum_mart (good_name, sum_sale)
+    select  G.good_name, SUM(G.good_price * S.sales_qty)
+    from goods G
+    inner join sales S ON S.good_id = G.goods_id
+    where exists(select 1 from Inserted N where N.good_id = G.goods_id)
+    group by G.good_name
+    on conflict (good_name)
+    do update set 
+        sum_sale = excluded.sum_sale; 
+    
+    RETURN NULL; 
+END;
+$$ LANGUAGE plpgsql;
+```
+
+Функция на изменение
+```bash
+CREATE OR REPLACE FUNCTION good_sum_mart_update() 
+RETURNS TRIGGER AS $$
+BEGIN   
+   
+    insert into good_sum_mart (good_name, sum_sale)
+    select G.good_name, SUM(G.good_price * S.sales_qty)
+    from goods G
+    inner join sales S ON S.good_id = G.goods_id
+    where exists
+          (select 1 
+           from Inserted N 
+           where N.good_id = G.goods_id
+           union all  -- на случай если good_id измениться
+           select 1 
+           from Deleted N 
+           where N.good_id = G.goods_id
+           )
+    group by G.good_name
+    on conflict (good_name)
+    do update set 
+        sum_sale = excluded.sum_sale;
+    
+    RETURN NULL; 
+END;
+$$ LANGUAGE plpgsql;
+```
+
+Функция на удаление
+```bash
+CREATE OR REPLACE FUNCTION good_sum_mart_delete() 
+RETURNS TRIGGER AS $$
+BEGIN   
+   
+    insert into good_sum_mart (good_name, sum_sale)
+    select  G.good_name, SUM(G.good_price * S.sales_qty)
+    from goods G
+    inner join sales S ON S.good_id = G.goods_id
+    where exists(select 1 from Deleted N where N.good_id = G.goods_id)
+    group by G.good_name
+    on conflict (good_name)
+    do update set 
+        sum_sale = excluded.sum_sale; 
+       
+    delete from good_sum_mart GS
+    using 
+    (
+         select G.good_name
+         from goods G
+         left join sales S ON S.good_id = G.goods_id
+         where exists(select 1 from Deleted N where N.good_id = G.goods_id)
+               and not exists(select 1 from Deleted N where N.good_id = S.good_id)
+         group by G.good_name   
+    ) V 
+    where V.good_name = GS.good_name; 
+    
+    RETURN NULL; 
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 2.2 Создаем три отдельных триггера AFTER на INSERT, UPDATE, DELETE.
+Делаем AFTER, т.к. по сути измение данных первично, а обновление таблицы-отчета вторично. И для триггера  UPDATE нужно чтобы в триггерной таблице NEW были уже изменные значения
+
+
+
+
+
+
+
+
 
 
 
