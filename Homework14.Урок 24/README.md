@@ -53,7 +53,7 @@ CREATE TABLE good_sum_mart
 Рассуждение:
 1. Триггер на каждую отельную строку делать не будем, т.к. нам при любом обновлении кол-ва строк таблицы sales нужно один раз обновить таблицу-отчет.
 2. Полное удаление таблицы и перестроение заново тоже делать не будем, т.к. это по сути перестроение всего отчета при каждом обновлении, а исходя из задачи сам отчет тормозит.
-3. Будем обновлять только строки в таблице только по тем товарам, у которых изменились продажи.
+3. Будем обновлять только строки в таблице good_sum_mart только по тем товарам, у которых изменились продажи. Это будет бустрее чем пункты 1 и 2.
 
 ### 2.1 Создаем три отдельные триггерные функции для каждой операции INSERT, UPDATE, DELETE.
 Делаем отдельные функции для уменьшения кода и использования REFERENCING (хотелось проверить работу).
@@ -186,7 +186,9 @@ select * from good_sum_mart;
 Выполняем вставку согласно исходным данным и сравниваем таблицу good_sum_mart и результат запрос отчета
 ```bash
 INSERT INTO sales (good_id, sales_qty) VALUES (1, 10), (1, 1), (1, 120), (2, 1);
+---
 select * from good_sum_mart;
+---
 SELECT G.good_name, sum(G.good_price * S.sales_qty)
 FROM goods G
 INNER JOIN sales S ON S.good_id = G.goods_id
@@ -195,26 +197,51 @@ GROUP BY G.good_name;
 ![image](https://github.com/user-attachments/assets/5cb2b74b-b6bb-4cc3-880a-e14a6f635c19)
 Результат одинаковый - значит тригрер на вставку работет корректно
 ### 3.3 Изменение
+**Изменение кол-ва**
 ```bash
+update sales
+set sales_qty=3
+where good_id = 1 and sales_qty = 10;
+---
+select * from good_sum_mart;
+---
+SELECT G.good_name, sum(G.good_price * S.sales_qty)
+FROM goods G
+INNER JOIN sales S ON S.good_id = G.goods_id
+GROUP BY G.good_name;
 ```
+![image](https://github.com/user-attachments/assets/363c5d4e-05cc-4976-a260-cb61c3111ab4)
+
+Результат одинаковый - значит тригрер на измененение работет корректно
+
+**Изменение товара**
+```bash
+update sales
+set sales_qty=3
+where good_id = 1 and sales_qty = 10;
+---
+select * from good_sum_mart;
+---
+SELECT G.good_name, sum(G.good_price * S.sales_qty)
+FROM goods G
+INNER JOIN sales S ON S.good_id = G.goods_id
+GROUP BY G.good_name;
+```
+![image](https://github.com/user-attachments/assets/76ea4b4c-19c0-4504-9583-85bb9159a70e)
+
+Результат одинаковый - значит тригрер на измененение работет корректно
 ### 3.4 Удаление 
+Удаление всех продаж одного товара 
 ```bash
+delete from sales where good_id = 2;
+---
+select * from good_sum_mart;
+---
+SELECT G.good_name, sum(G.good_price * S.sales_qty)
+FROM goods G
+INNER JOIN sales S ON S.good_id = G.goods_id
+GROUP BY G.good_name;
 ```
+![image](https://github.com/user-attachments/assets/f077f4c2-650b-44ff-8cd9-b0d6dd92e7f1)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Результат одинаковый - значит тригрер на удаление работет корректно
