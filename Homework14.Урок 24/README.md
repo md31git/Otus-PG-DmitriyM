@@ -174,11 +174,42 @@ create unique index  "IQ_good_sum_mart(good_name)" on good_sum_mart (good_name);
 ```
 
 ## 3 Проверка работы
-### 3.1 Добавление
+### 3.1 Подготовка
+Удаляем все записи из таблицы sales и проверяем что в таблице good_sum_mart пусто.
+```bash
+delete from sales;
+select * from good_sum_mart;
+```
+![image](https://github.com/user-attachments/assets/08048965-fa0c-458d-9af8-ca2d89d4d59b)
 
-### 3.2 Изменение
+### 3.2 Добавление
+Выполняем вставку согласно исходным данным и сравниваем таблицу good_sum_mart и результат запрос отчета
+```bash
+INSERT INTO sales (good_id, sales_qty) VALUES (1, 10), (1, 1), (1, 120), (2, 1);
+select * from good_sum_mart;
+SELECT G.good_name, sum(G.good_price * S.sales_qty)
+FROM goods G
+INNER JOIN sales S ON S.good_id = G.goods_id
+GROUP BY G.good_name;
+```
+![image](https://github.com/user-attachments/assets/5cb2b74b-b6bb-4cc3-880a-e14a6f635c19)
+Результат одинаковый - значит тригрер на вставку работет корректно
+### 3.3 Изменение
+```bash
+```
+### 3.4 Удаление 
+```bash
+```
 
-### 3.3 Удаление 
+
+
+
+
+
+
+
+
+
 
 
 
